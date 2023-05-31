@@ -7,9 +7,9 @@
     "distill-render": "./bin/render.js"
   },
   "author": "Shan Carter",
-  "homepage": "https://github.com/distillpub/distill-template#readme",
+  "homepage": "https://github.com/llm-random/llm-random.github.io#readme",
   "bugs": {
-    "url": "https://github.com/distillpub/distill-template/issues"
+    "url": "https://github.com/llm-random/llm-random.github.io/issues"
   },
   "scripts": {
     "dev": "rollup -c rollup.config.dev.js -w",
@@ -20,7 +20,7 @@
     "prepare": "npm run build"
   },
   "repository": {
-    "url": "git+https://github.com/distillpub/distill-template.git",
+    "url": "git+https://github.com/llm-random/llm-random.github.io.git",
     "type": "git"
   },
   "devDependencies": {
