@@ -1,0 +1,29 @@
+---
+title: "Neuron Recycling"
+author: 
+    -   name: Jakub Krajewski
+        affiliations:
+        -   name: University of Warsaw
+            index: 1
+        -   name: IDEAS NCBR
+            index: 2
+    -   name: Maciej Pióro
+        affiliations:
+        -   name: University of Warsaw
+            index: 1
+        -   name: IDEAS NCBR
+            index: 2
+    -   name: Sebastian Jaszczur
+        affiliations:
+        -   name: University of Warsaw
+            index: 1
+        -   name: IDEAS NCBR
+            index: 2
+date: "2023-07-05"
+categories: []
+image: "fast_parrot.gif"
+---
+
+Sparse neural networks have garnered attention due to their theoretical promise of lowered computational demands and memory savings. However, to this date, the theoretical gains have largely failed to materialize due to the lack of hardware support for this kind of models. In this work, we explore the idea of neuron recycling which is inspired by pruning - a method often employed to induce sparsity in neural networks. We also present lessons we have learned along the way.
+
+{{< include _plot1.qmd >}}

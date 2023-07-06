@@ -7,6 +7,13 @@
     "text": "About this blog"
   },
   {
+    "objectID": "posts/neuron_recycling/index.html",
+    "href": "posts/neuron_recycling/index.html",
+    "title": "Neuron Recycling",
+    "section": "",
+    "text": "Sparse neural networks have garnered attention due to their theoretical promise of lowered computational demands and memory savings. However, to this date, the theoretical gains have largely failed to materialize due to the lack of hardware support for this kind of models. In this work, we explore the idea of neuron recycling which is inspired by pruning - a method often employed to induce sparsity in neural networks. We also present lessons we have learned along the way."
+  },
+  {
     "objectID": "posts/welcome/index.html",
     "href": "posts/welcome/index.html",
     "title": "Welcome To Our Blog",
@@ -18,6 +25,6 @@
     "href": "index.html",
     "title": "llm-random",
     "section": "",
-    "text": "Welcome To Our Blog\n\n\n\n\n\n\n\nnews\n\n\n\n\n\n\n\n\n\n\n\nMay 31, 2023\n\n\nMaciej Pióro\n\n\n\n\n\n\nNo matching items"
+    "text": "Neuron Recycling\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nJul 5, 2023\n\n\nJakub Krajewski, Maciej Pióro, Sebastian Jaszczur\n\n\n\n\n\n\n  \n\n\n\n\nWelcome To Our Blog\n\n\n\n\n\n\n\nnews\n\n\n\n\n\n\n\n\n\n\n\nMay 31, 2023\n\n\nMaciej Pióro\n\n\n\n\n\n\nNo matching items"
   }
 ]
