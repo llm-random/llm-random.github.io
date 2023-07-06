@@ -2,6 +2,9 @@
   {
     "listing": "/index.html",
     "items": [
+      "/posts/neuron_recycling/magnitudes.html",
+      "/posts/neuron_recycling/figure_full_retrain.html",
+      "/posts/neuron_recycling/figure_8.html",
       "/posts/neuron_recycling/index.html",
       "/posts/welcome/index.html"
     ]

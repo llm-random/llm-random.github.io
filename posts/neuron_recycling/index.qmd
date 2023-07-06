@@ -1,6 +1,6 @@
 ---
 title: "Neuron Recycling"
-author: 
+author:
     -   name: Jakub Krajewski
         affiliations:
         -   name: University of Warsaw
@@ -26,4 +26,45 @@ image: "fast_parrot.gif"
 
 Sparse neural networks have garnered attention due to their theoretical promise of lowered computational demands and memory savings. However, to this date, the theoretical gains have largely failed to materialize due to the lack of hardware support for this kind of models. In this work, we explore the idea of neuron recycling which is inspired by pruning - a method often employed to induce sparsity in neural networks. We also present lessons we have learned along the way.
 
-{{< include _plot1.qmd >}}
+# Introduction
+
+Pruning is a well-established technique used to sparsify neural networks. It relies on the fact that typically a large part of a trained neural network can be masked without impacting the accuracy of the network, albeit often requiring additional fine-tuning in order to regain some lost performance. Despite multiple works proposing various neuron-selection criteria for pruning, magnitude-based pruning remains a viable option.
+<The Lottery Ticket Hypothesis is a major finding on the way to explain how initialization impacts neural networks>. The main point of the LTH is that through iterative pruning, performant subnetworks depending on the initialization can be found in neural networks. Those well-initialized network fragments are the namesake of LTH (the “lottery tickets”).
+By combining the two ideas (pruning and LTH) we arrive at a new potential technique for raising neural network performance. If we are able to remove parts of the network without hurting the performance (pruning) and the fitness of a part of a network is determined at initialization, perhaps we could re-initialize the unnecessary network parts (i. e. draw more “lottery tickets”).
+
+# Understanding neuron magnitudes
+
+One of the first natural questions we have asked ourselves, as we already knew that we wanted to take into consideration neuron magnitudes, was how does this metric behave and evolve during the training process. <rozbić to zdanie/zmienić> Intuitively, the magnitude of a neuron correlates with its significance. At first, we thought a histogram of neuron magnitudes would exhibit a normal distribution. However, our findings showed something different - the distribution follows a Pareto-like shape, with a majority of almost-zero or small values, as seen in the plot below.
+
+{{< include magnitudes.qmd >}}
+
+<br/>
+
+This discovery raised several questions. Are the majority of neurons with very small magnitudes insignificant? Can they be dropped? Or could it be that these "small" neurons are activated rarely, but are crucial for certain tasks? Alternatively, perhaps when combined, they contribute significantly to the overall performance? Although we initially expected a different distribution, we wanted to explore and find the "ideal" distribution of neurons.
+
+As a side note: interestingly, we noticed that this discrepancy does not happen in the last layers of the network. As an example, below you can examine magnitudes for neurons in the 8th FF layer of the network.
+
+{{< include figure_8.qmd >}}
+
+<br/>
+
+In order to find the ideal neuron distribution, we decided to give special attention to the feed-forward (FF) component of the network. <zmienić poprzednie zdanie> We periodically froze all parts of the network except for the FF component and continued to train it for several batches of data. We hypothesized that in this scenario, weaker neurons might "catch up," resulting in a more even distribution. The results of this experiment can be seen in the following plot.
+
+{{< include figure_full_retrain.qmd >}}
+
+We have also examined the scenario of retraining only small magnitude neurons, only large magnitude neurons and random subsets. How does it affect the performance? The results are depicted on the following plot.
+
+[plot will be attached here]
+
+Interestingly, retraining only the smallest neurons yields the best results when compared to reinforcing high-magnitude neurons or random subsets. This provided a compelling argument in favor of our technique. However, it is important to note that these experiments were based on pretraining relatively small, BERT-based models. We were curious to see how our observations would translate to well-established, large-scale foundation models like BERT, T5, and GPT-2.
+
+[plot - magnitudes in foundation models]
+
+Upon examining the magnitudes in these foundation models, noticeable differences emerge. The magnitudes in T5 seem similar to those in our smaller models, while BERT and GPT-2 display more favorable distributions. What could account for these variations? We discovered that the use of weight decay plays a significant role. This simple but widely used technique has a considerable impact on the distribution phenomenon we've been investigating.
+
+These findings support the idea of exploring neuron recycling more thoroughly and offer a solid foundation for further experiments. In subsequent sections, we will delve into the results of these investigations and share our insights.
+
+
+# Recycling
+
+The central part of our work was a method we called neuron recycling. The whole process boils down to three phases, repeated periodically: training, selection and reinitialization. 
