@@ -3,28 +3,38 @@ title: "Neuron Recycling"
 author:
     -   name: Jakub Krajewski
         affiliations:
-        -   name: University of Warsaw
-            index: 1
         -   name: IDEAS NCBR
+            index: 1
+        -   name: University of Warsaw
             index: 2
     -   name: Maciej Pióro
         affiliations:
-        -   name: University of Warsaw
-            index: 1
         -   name: IDEAS NCBR
+            index: 1
+        -   name: University of Warsaw
             index: 2
     -   name: Sebastian Jaszczur
         affiliations:
+        -   name: IDEAS NCBR
+            index: 1
+        -   name: University of Warsaw
+            index: 2
+    -   name: Marek Cygan
+        affiliations:
         -   name: University of Warsaw
             index: 1
-        -   name: IDEAS NCBR
-            index: 2
-date: "2023-07-05"
+date: "2023-07-07"
 categories: []
 image: "logo.png"
+format:
+  html:
+    include-in-header:
+      - text: |
+          <script charset="utf-8" src="https://cdn.plot.ly/plotly-2.20.0.min.js">
 ---
 
 Sparse neural networks have garnered attention due to their theoretical promise of lowered computational demands and memory savings. However, to this date, the theoretical gains have largely failed to materialize due to the lack of hardware support for this kind of models. In this work, we explore the idea of neuron recycling which is inspired by pruning - a method often employed to induce sparsity in neural networks. We also present lessons we have learned along the way.
+
 
 # Introduction
 
@@ -32,11 +42,28 @@ Pruning is a well-established technique used to sparsify neural networks. It rel
 <The Lottery Ticket Hypothesis is a major finding on the way to explain how initialization impacts neural networks>. The main point of the LTH is that through iterative pruning, performant subnetworks depending on the initialization can be found in neural networks. Those well-initialized network fragments are the namesake of LTH (the “lottery tickets”).
 By combining the two ideas (pruning and LTH) we arrive at a new potential technique for raising neural network performance. If we are able to remove parts of the network without hurting the performance (pruning) and the fitness of a part of a network is determined at initialization, perhaps we could re-initialize the unnecessary network parts (i. e. draw more “lottery tickets”).
 
+# Preliminaries
+
+Before jumping straight into the techniques we employed and the results we obtained, we need to lay down some groundwork. We assume you have some background in machine learning and in deep learning in particular. Here is a short glossary of the most important terms used in this post.
+
+* **Transformer** <br/>
+    Transformer is the leading modern neural network architecture. To keep things concise, we refer you to <illustrated transformer> if you want to learn more about it. The most important thing in this blogpost is that a Transformer consists of many blocks stacked on top of each other, with each of the blocks containing multi-head attention mechanism and a feed-forward layer. This blogpost focuses on recycling neurons in the feed-forward layer. 
+    <dwa słowa, dlaczego atakujemy tę część a nie np atencję>
+* **Neuron** <br/>
+    Neurons are the basic building blocks of artificial neural networks. A neuron consists of some weights going “into” the neuron ($w_{in}\text{'s}$), an activation function (we use ReLU), and the weights going “out” of the neuron ($w_{out}\text{'s}$). Technically speaking, the neurons' weights are a column and a row of two matrices.
+    <coś o tym, że u nas zawsze są dwa bloki liniowe + napisać o macierzach>
+* **Pruning** (structured and unstructured) <br/>
+    Pruning is a technique used to induce sparsity and decrease the parameter count in a neural network. It is basically a fancy name for deleting the least important neurons (structured pruning) or weights (unstructured pruning). A typical implementation realizes this by either multiplying the output of the deleted neurons by 0 or setting the weights of the neuron to 0. A widely-used proxy for the importance of a neuron or weight is its magnitude.
+* **Magnitude** <br/>
+    The magnitude of a neuron is given as $M=\sqrt{\sum{w_{in}^2} \sum{w_{out}^2}}$. The magnitude of a weight is simply its absolute value.
+
 # Understanding neuron magnitudes
 
 One of the first natural questions we have asked ourselves, as we already knew that we wanted to take into consideration neuron magnitudes, was how does this metric behave and evolve during the training process. <rozbić to zdanie/zmienić> Intuitively, the magnitude of a neuron correlates with its significance. At first, we thought a histogram of neuron magnitudes would exhibit a normal distribution. However, our findings showed something different - the distribution follows a Pareto-like shape, with a majority of almost-zero or small values, as seen in the plot below.
 
-{{< include magnitudes.qmd >}}
+```
+{{< include _magnitudes.qmd >}}
+```
 
 <br/>
 
@@ -44,17 +71,19 @@ This discovery raised several questions. Are the majority of neurons with very s
 
 As a side note: interestingly, we noticed that this discrepancy does not happen in the last layers of the network. As an example, below you can examine magnitudes for neurons in the 8th FF layer of the network.
 
-{{< include figure_8.qmd >}}
+```
+{{< include _figure_8.qmd >}}
+```
 
 <br/>
 
 In order to find the ideal neuron distribution, we decided to give special attention to the feed-forward (FF) component of the network. <zmienić poprzednie zdanie> We periodically froze all parts of the network except for the FF component and continued to train it for several batches of data. We hypothesized that in this scenario, weaker neurons might "catch up," resulting in a more even distribution. The results of this experiment can be seen in the following plot.
 
-{{< include figure_full_retrain.qmd >}}
+{{< include _figure_full_retrain.qmd >}}
 
 We have also examined the scenario of retraining only small magnitude neurons, only large magnitude neurons and random subsets. How does it affect the performance? The results are depicted on the following plot.
 
-[plot will be attached here]
+{{< include plots_jk/_over_fig.qmd >}}
 
 Interestingly, retraining only the smallest neurons yields the best results when compared to reinforcing high-magnitude neurons or random subsets. This provided a compelling argument in favor of our technique. However, it is important to note that these experiments were based on pretraining relatively small, BERT-based models. We were curious to see how our observations would translate to well-established, large-scale foundation models like BERT, T5, and GPT-2.
 
@@ -83,7 +112,7 @@ Although this procedure is conceptually simple, it allows for many degrees of fr
 
 After examining the pruning literature [citations], and also based on our own experiments, we have found that the simple magnitude-based approach works best in most cases <plot pruning>. It is also easy to implement and computationally efficient.
 
-<wykres: pruning random/małe/duże/brak ff-a od początku>
+{{< include plots_jk/_pruning.qmd >}}
 
 It has been shown <citation>, that the initialization of the weights in neural networks is of utmost importance to the convergence of the network. In all our experiments, we initialized the linear layers using the following distribution: <latex> as per <citation>.
 
@@ -92,7 +121,10 @@ It has been shown <citation>, that the initialization of the weights in neural n
 The most straightforward reinitialization scheme is to sample the weights of the reinitialized neurons from the initial distribution. After examining the performance of this solution, we could not see any difference between recycling and vanilla training. As a sanity check, we have examined the histogram presenting the number of times each neuron was recycled, discovering that the same small subset of neurons was being reinitialized over and over during training. As we have seen <link do distr throughout training>, on average magnitude of neurons grows throughout the training. Therefore, the newly sampled neurons have, on average, lower magnitudes than non-recycled neurons and are unable to catch up to non-recycled neurons before another selection phase. Thus, the recycled neurons are caught up in a vicious cycle in which they are always recycled before achieving high magnitude.
 
 
+::: {#some-figure} 
 {{< include plots_mp/_vs_histogram.qmd >}}
+Figure description
+:::
 
 {{< include plots_mp/_vc_vs_baseline.qmd >}}
 
@@ -115,11 +147,11 @@ As we have pointed out before, magnitude and weight distribution drifts away fro
 A feed-forward layer consists of two matrices. Each time a neuron is reinitialized, the corresponding row and column in the matrices are filled with new (reinitialized) weights. The new technique, when replacing the weights, used the normal distribution with mean and standard deviation equal to the mean and standard deviation of all the weights in the respective matrix. This approach, like immunity, eliminated the vicious cycle. However, this process introduced a lot of noise with adverse effect on the model's loss.
 
 
-{{< include plots_mp/_7vs3_histogram.qmd >}}
+{{< include plots_mp/_plot_current_recycling_histogram.qmd >}}
 
-{{< include plots_mp/_7vs3vsBaseline_loss.qmd >}}
+{{< include plots_mp/_plot_init_vs_current.qmd >}}
 
-
+## Copying existing neurons
 At this stage of our project, we gained interest in the topic of growing neural networks. Intuitively, this problem has a similar part, in which we want to add new neurons or weights. In the case of Large Language Models, the topic is mentioned in [Gopher]. The authors describe that for their experiments, copying existing neurons was the best strategy.  We have also tried this strategy, but without positive results.
 
 Starając się wyjaśnić nasze dotychczasowe problemy, zwróciliśmy uwagę na dyskretną naturę naszej techniki, as opposed to the continuous landscape of training/optimizers. To change this, we have modified our strategy to gradually change the value by linear interpolation, according to the rule
@@ -128,27 +160,24 @@ Starając się wyjaśnić nasze dotychczasowe problemy, zwróciliśmy uwagę na 
 
 where \alpha was frozen and \beta trainable. We have noticed that this way we were able to make training loss dynamics smoother, but still without any positive effect.
 
-{{< include plots_jk/smooth_fig.qmd >}}
+{{< include plots_jk/_smooth_fig.qmd >}}
 
 In general, we couldn’t beat the baseline in terms of performance.
 
-# Other ideas we researched
-
-## Midpoint Loss
+# Tangent - Midpoint Loss
 
 While working towards the main goal of the project, we started investigating the distribution of neuron magnitudes during the training [link do sekcji z blogposta]. We noticed that the magnitude distribution is quite uneven - a large percentage of neurons remains small, and the distribution is right-skewed.
 Since the goal of our project was to reduce the number of low-quality, i.e., small neurons, we came up with a pretty risky solution: Midpoint Loss.
 The idea was to introduce an additional loss term that would encourage neuron growth and ``even-ness'' of the magnitude distribution. The general equation for the midpoint loss is:
 
-$$ Loss = \sum_{l = 1}^{L} \sum_{n = 1}^{dff} dist(M_{l,n}, stop\_grad(midpoint(M_{l,*}))), $$
+$$ Loss = \sum_{l = 1}^{L} \sum_{n = 1}^{dff} dist(M_{l,n}, stop\_grad(avg(M_{l,*})))$$
 where:
 
-* $M_{l,n}$ -magnitude of then-th neuron in the l-th layer
-*$dist$ - some distance function, typically$l_1$,$l_2$
-*$midpoint$ -mean or median. Median can be used instead of mean because of itsrobustness with respect
+* $M_{l,n}$ - magnitude of th $n^{\text{th}}$ neuron in the $l^{\text{th}}$ layer. In some experiments we used the $log$ of the magnitude.
+* $dist$ - distance function, typically $l_1$, $l_2$
+* $avg$ - arithmetic mean. In some experiments, median was used instead due to its robustness to outliers.
 
 Since this idea is quite similar to weight decay, we decided not to optimize this term with Adam, but to split it from the task loss and optimize it using simple gradient descent - a similar technique is used in AdamW to incorporate weight decay loss term.
-Since we weren;c
 
 <plot, że iwd zmienia dystrybucję magnitude>
 <wariacje nt. Plotu ze strzałkami tłumaczące różne opcje w immunity>
