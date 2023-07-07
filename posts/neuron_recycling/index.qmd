@@ -21,7 +21,7 @@ author:
             index: 2
 date: "2023-07-05"
 categories: []
-image: "fast_parrot.gif"
+image: "logo.png"
 ---
 
 Sparse neural networks have garnered attention due to their theoretical promise of lowered computational demands and memory savings. However, to this date, the theoretical gains have largely failed to materialize due to the lack of hardware support for this kind of models. In this work, we explore the idea of neuron recycling which is inspired by pruning - a method often employed to induce sparsity in neural networks. We also present lessons we have learned along the way.
@@ -76,6 +76,7 @@ The central part of our work was a method we called neuron recycling. The whole 
 * In the reinitialization phase, new weights are assigned to neurons.
 
 Although this procedure is conceptually simple, it allows for many degrees of freedom. Here are some choices that can be made:
+
 * The number of training steps before consecutive selection / reinitialization phases
 * The percentage of recycled neurons
 * Selection / reinitialization strategies
@@ -86,21 +87,38 @@ After examining the pruning literature [citations], and also based on our own ex
 
 It has been shown <citation>, that the initialization of the weights in neural networks is of utmost importance to the convergence of the network. In all our experiments, we initialized the linear layers using the following distribution: <latex> as per <citation>.
 
+## Baseline recycling
+
 The most straightforward reinitialization scheme is to sample the weights of the reinitialized neurons from the initial distribution. After examining the performance of this solution, we could not see any difference between recycling and vanilla training. As a sanity check, we have examined the histogram presenting the number of times each neuron was recycled, discovering that the same small subset of neurons was being reinitialized over and over during training. As we have seen <link do distr throughout training>, on average magnitude of neurons grows throughout the training. Therefore, the newly sampled neurons have, on average, lower magnitudes than non-recycled neurons and are unable to catch up to non-recycled neurons before another selection phase. Thus, the recycled neurons are caught up in a vicious cycle in which they are always recycled before achieving high magnitude.
 
-<plot z liczbą reinicjalizacji per neuron>
+
+{{< include plots_mp/_vs_histogram.qmd >}}
+
+{{< include plots_mp/_vc_vs_baseline.qmd >}}
+
 
 <spróbować zrobić diagram z `vicious cycle`>
+
+## Immunity
 
 Another thing we tried to make reinitialization work was Immunity. The idea here is to encourage diverse recycling by making each recycled neuron immune to further recycling for some predefined number of steps. We hypothesized that a reinitialized neuron needs some time to grow, but in our initial setting, the neuron is recycled before enough growth happens, keeping the smaller neurons in a vicious cycle of periodically reoccurring reinitialization.
 Unfortunately, in our experiments, the reinitialized neurons failed to grow even if given immunity. At the same time immunity of the small neurons lead to recycling of the large neurons, hurting the model’s performance.
 
-<graph in which initial recycling are not visible, but later once show it hurts performance>
+{{< include plots_mp/_7vs3_histogram.qmd >}}
 
-At this point, we hypothesized that coming back to the initial distribution may not be the optimal choice, as weights of the neurons evolve while they are trained. The next idea we wanted to experiment with was simply sampling from the distribution that occurred across the entire layer at any given moment. Our approach was straightforward: we randomly selected from all the weights in the entire matrix. Here again, we noted the impact of our technique, but it was only when we conducted such intensive recycling that performance deteriorated.
-^ Tu opisać reinicjalizację z dystrybucją z momentu recyklingu
+{{< include plots_mp/_7vs3vsBaseline_loss.qmd >}}
 
-<jakiś graph tutaj>
+
+## Modifying reinitialization weights distribution
+
+As we have pointed out before, magnitude and weight distribution drifts away from the initial distribution as the training progresses. However, during our initial attempts, we initialized the weights sampling from the initial distribution. To fix this issue, we decided to try out another weight sampling technique.
+A feed-forward layer consists of two matrices. Each time a neuron is reinitialized, the corresponding row and column in the matrices are filled with new (reinitialized) weights. The new technique, when replacing the weights, used the normal distribution with mean and standard deviation equal to the mean and standard deviation of all the weights in the respective matrix. This approach, like immunity, eliminated the vicious cycle. However, this process introduced a lot of noise with adverse effect on the model's loss.
+
+
+{{< include plots_mp/_7vs3_histogram.qmd >}}
+
+{{< include plots_mp/_7vs3vsBaseline_loss.qmd >}}
+
 
 At this stage of our project, we gained interest in the topic of growing neural networks. Intuitively, this problem has a similar part, in which we want to add new neurons or weights. In the case of Large Language Models, the topic is mentioned in [Gopher]. The authors describe that for their experiments, copying existing neurons was the best strategy.  We have also tried this strategy, but without positive results.
 
@@ -110,13 +128,25 @@ Starając się wyjaśnić nasze dotychczasowe problemy, zwróciliśmy uwagę na 
 
 where \alpha was frozen and \beta trainable. We have noticed that this way we were able to make training loss dynamics smoother, but still without any positive effect.
 
+{{< include plots_jk/smooth_fig.qmd >}}
+
 In general, we couldn’t beat the baseline in terms of performance.
 
 # Other ideas we researched
 
+## Midpoint Loss
+
 While working towards the main goal of the project, we started investigating the distribution of neuron magnitudes during the training [link do sekcji z blogposta]. We noticed that the magnitude distribution is quite uneven - a large percentage of neurons remains small, and the distribution is right-skewed.
-Since the goal of our project was to reduce the number of low-quality, i.e., small neurons, we came up with a pretty risky solution: inverse weight decay.
-The idea was to introduce an additional loss term that would encourage neuron growth. The general equation for that loss is: <latex>
+Since the goal of our project was to reduce the number of low-quality, i.e., small neurons, we came up with a pretty risky solution: Midpoint Loss.
+The idea was to introduce an additional loss term that would encourage neuron growth and ``even-ness'' of the magnitude distribution. The general equation for the midpoint loss is:
+
+$$ Loss = \sum_{l = 1}^{L} \sum_{n = 1}^{dff} dist(M_{l,n}, stop\_grad(midpoint(M_{l,*}))), $$
+where:
+
+* $M_{l,n}$ -magnitude of then-th neuron in the l-th layer
+*$dist$ - some distance function, typically$l_1$,$l_2$
+*$midpoint$ -mean or median. Median can be used instead of mean because of itsrobustness with respect
+
 Since this idea is quite similar to weight decay, we decided not to optimize this term with Adam, but to split it from the task loss and optimize it using simple gradient descent - a similar technique is used in AdamW to incorporate weight decay loss term.
 Since we weren;c
 
@@ -124,4 +154,5 @@ Since we weren;c
 <wariacje nt. Plotu ze strzałkami tłumaczące różne opcje w immunity>
 
 # Takeaways
-Takeaways from the project.
+
+Takeaways from the project. Test test2
