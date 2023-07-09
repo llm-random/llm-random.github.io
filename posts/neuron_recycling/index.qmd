@@ -46,6 +46,9 @@ By combining the two ideas (pruning and LTH) we arrive at a new potential techni
 
 Before jumping straight into the techniques we employed and the results we obtained, we need to lay down some groundwork. We assume you have some background in machine learning and in deep learning in particular. Here is a short glossary of the most important terms used in this post.
 
+## Model and training setup
+Our model is BERT blah blah...
+
 * **Transformer** <br/>
     Transformer is the leading modern neural network architecture. To keep things concise, we refer you to the [Annotated Transformer](http://nlp.seas.harvard.edu/annotated-transformer/) if you want to learn more about it. The most important thing in this blogpost is that a Transformer consists of many blocks stacked on top of each other, with each of the blocks containing multi-head attention mechanism and a feed-forward layer. This blogpost focuses on recycling neurons in the feed-forward layer.
 
@@ -60,6 +63,13 @@ Before jumping straight into the techniques we employed and the results we obtai
 * **Magnitude** <br/>
     The magnitude of a neuron is given as $M=\sqrt{\sum{w_{in}^2} \sum{w_{out}^2}}$. The magnitude of a weight is simply its absolute value.
 
+## Pruning
+Pruning is a technique used to induce sparsity and decrease the parameter count in a neural network. It is basically a fancy name for deleting the least important neurons (structured pruning) or weights (unstructured pruning). A typical implementation realizes this by either multiplying the output of the deleted neurons by 0 or setting the weights of the neuron to 0. A widely-used proxy for the importance of a neuron or weight is its magnitude. You may find it counterintuitive, but we can even remove the whole FF Layer and the model will still work. This is because FF can be approximated by Attention. Below is a plot with pruning.
+
+{{< include plots_jk/_pruning_masked_b.qmd >}}
+
+As you can see, pruning is getting works just in step 35k, and no FF is slightly better in the end.
+
 ## The goal
 <!--
 Napisać o modelu i dff-ach.
@@ -68,6 +78,8 @@ The main goal of our work was to improve the performance of a transformer model 
 
 {{< include plots_mp/_dffs_loss.qmd >}}
 
+    Transformer is the leading modern neural network architecture. To keep things concise, we refer you to <illustrated transformer> if you want to learn more about it. The most important thing in this blogpost is that a Transformer consists of many blocks stacked on top of each other, with each of the blocks containing multi-head attention mechanism and a feed-forward layer. This blogpost focuses on recycling neurons in the feed-forward layer.
+    <dwa słowa, dlaczego atakujemy tę część a nie np atencję>
 
 # Understanding neuron magnitudes
 
@@ -81,9 +93,7 @@ This discovery raised several questions. Are the majority of neurons with very s
 
 As a side note: interestingly, we noticed that this discrepancy does not happen in the last layers of the network. As an example, below you can examine magnitudes for neurons in the 8th FF layer of the network.
 
-```
-{{< include _figure_8.qmd >}}
-```
+{{< include plots_jk/_layer8.qmd >}}
 
 <br/>
 
@@ -93,8 +103,10 @@ In order to find the ideal neuron distribution, we decided to give special atten
 {{< include plots_jk/_full_ret.qmd >}}
 ```
 
+<br/>
+
 We have also examined the scenario of retraining only small magnitude neurons, only large magnitude neurons and random subsets. How does it affect the performance? The results are depicted on the following plot.
- 
+
 {{< include plots_jk/_over_fig.qmd >}}
 
 Interestingly, retraining only the smallest neurons yields the best results when compared to reinforcing high-magnitude neurons or random subsets. This provided a compelling argument in favor of our technique. However, it is important to note that these experiments were based on pretraining relatively small, BERT-based models. We were curious to see how our observations would translate to well-established, large-scale foundation models like BERT Large or T5.
@@ -127,14 +139,16 @@ After examining the pruning literature [citations], and also based on our own ex
 
 {{< include plots_jk/_pruning.qmd >}}
 
-It has been shown <citation>, that the initialization of the weights in neural networks is of utmost importance to the convergence of the network. In all our experiments, we initialized the linear layers using the following distribution: <latex> as per <citation>.
+Comment on the plot above.
+
+It has been shown <citation>, that the initialization of the weights in neural networks is of utmost importance to the convergence of the network. In all our experiments, we initialized the linear layers using the following distribution: <latex> as per <citation>. (move to preliminaries?)
 
 ## Baseline recycling
 
 The most straightforward reinitialization scheme is to sample the weights of the reinitialized neurons from the initial distribution. After examining the performance of this solution, we could not see any difference between recycling and vanilla training. As a sanity check, we have examined the histogram presenting the number of times each neuron was recycled, discovering that the same small subset of neurons was being reinitialized over and over during training. As we have seen <link do distr throughout training>, on average magnitude of neurons grows throughout the training. Therefore, the newly sampled neurons have, on average, lower magnitudes than non-recycled neurons and are unable to catch up to non-recycled neurons before another selection phase. Thus, the recycled neurons are caught up in a vicious cycle in which they are always recycled before achieving high magnitude.
 
 
-::: {#fig-elephant}  
+::: {#fig-elephant}
 
 {{< include plots_mp/_vs_histogram.qmd >}}
 
