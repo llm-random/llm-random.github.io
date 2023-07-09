@@ -95,6 +95,13 @@
     "href": "posts/neuron_recycling/index.html#copying-existing-neurons",
     "title": "Neuron Recycling",
     "section": "Copying existing neurons",
-    "text": "Copying existing neurons\nAt this stage of our project, we gained interest in the topic of growing neural networks. Intuitively, this problem has a similar part, in which we want to add new neurons or weights. In the case of Large Language Models, the topic is mentioned in [Gopher]. The authors describe that for their experiments, copying existing neurons was the best strategy. We have also tried this strategy, but without positive results.\nStarając się wyjaśnić nasze dotychczasowe problemy, zwróciliśmy uwagę na dyskretną naturę naszej techniki, as opposed to the continuous landscape of training/optimizers. To change this, we have modified our strategy to gradually change the value by linear interpolation, according to the rule\n&lt;latex ze wzorkiem; może jakiś plot z naszymi górkami&gt;,\nwhere was frozen and trainable. We have noticed that this way we were able to make training loss dynamics smoother, but still without any positive effect.\n\n\n\n\n                            \n                                            \n\n\nIn general, we couldn’t beat the baseline in terms of performance."
+    "text": "Copying existing neurons\nAt this stage of our project, we gained interest in the topic of growing neural networks. Intuitively, this problem has a similar part, in which we want to add new neurons or weights. In the case of Large Language Models, the topic is mentioned in [Gopher]. The authors describe that for their experiments, copying existing neurons was the best strategy. We have also tried this strategy, but without positive results.\nStarając się wyjaśnić nasze dotychczasowe problemy, zwróciliśmy uwagę na dyskretną naturę naszej techniki, as opposed to the continuous landscape of training/optimizers. To change this, we have modified our strategy to gradually change the value by linear interpolation, according to the rule\n&lt;latex ze wzorkiem; może jakiś plot z naszymi górkami&gt;,\nwhere was frozen and trainable. We have noticed that this way we were able to make training loss dynamics smoother, but still without any positive effect.\n{{&lt; include plots_jk/_smooth_fig.qmd &gt;}}\nIn general, we couldn’t beat the baseline in terms of performance."
+  },
+  {
+    "objectID": "posts/neuron_recycling/index.html#the-goal",
+    "href": "posts/neuron_recycling/index.html#the-goal",
+    "title": "Neuron Recycling",
+    "section": "The goal",
+    "text": "The goal"
   }
 ]

@@ -2,28 +2,29 @@
 title: "Neuron Recycling"
 author:
     -   name: Jakub Krajewski
+        equal-contributor: true
         affiliations:
-        -   name: IDEAS NCBR
-            index: 1
-        -   name: University of Warsaw
-            index: 2
+        -   ref: ideas
+        -   ref: uow
     -   name: Maciej Pióro
+        equal-contributor: true
         affiliations:
-        -   name: IDEAS NCBR
-            index: 1
-        -   name: University of Warsaw
-            index: 2
+        -   ref: ideas
+        -   ref: uow
     -   name: Sebastian Jaszczur
-        affiliations:
-        -   name: IDEAS NCBR
-            index: 1
-        -   name: University of Warsaw
-            index: 2
+        affiliations: 
+        -   ref: ideas
+        -   ref: uow
     -   name: Marek Cygan
         affiliations:
-        -   name: University of Warsaw
-            index: 1
+        -   ref: uow
+affiliations:
+    -   id: ideas
+        name: IDEAS NCBR
+    -   id: uow
+        name: University of Warsaw
 date: "2023-07-07"
+# date-modified: "2023-07-07"
 categories: []
 image: "logo.png"
 format:
@@ -38,24 +39,35 @@ Sparse neural networks have garnered attention due to their theoretical promise 
 
 # Introduction
 
-Pruning is a well-established technique used to sparsify neural networks. It relies on the fact that typically a large part of a trained neural network can be masked without impacting the accuracy of the network, albeit often requiring additional fine-tuning in order to regain some lost performance. Despite multiple works proposing various neuron-selection criteria for pruning, magnitude-based pruning remains a viable option.
-<The Lottery Ticket Hypothesis is a major finding on the way to explain how initialization impacts neural networks>. The main point of the LTH is that through iterative pruning, performant subnetworks depending on the initialization can be found in neural networks. Those well-initialized network fragments are the namesake of LTH (the “lottery tickets”).
-By combining the two ideas (pruning and LTH) we arrive at a new potential technique for raising neural network performance. If we are able to remove parts of the network without hurting the performance (pruning) and the fitness of a part of a network is determined at initialization, perhaps we could re-initialize the unnecessary network parts (i. e. draw more “lottery tickets”).
+Pruning is a well-established technique used to sparsify neural networks. It relies on the fact that typically a large part of a trained neural network can be masked without impacting the accuracy of the network, albeit often requiring additional fine-tuning in order to regain some lost performance. Despite multiple works proposing various neuron-selection criteria for pruning, magnitude-based pruning remains a viable option. The Lottery Ticket Hypothesis is a major finding on the way to explain how the initialization impacts neural networks. The main point of the LTH is that through iterative pruning, performant subnetworks depending on the initialization can be found in neural networks. Those well-initialized network fragments are the namesake of LTH (the “lottery tickets”). Although some notions of the original LTH paper have been challenged, it has remained the subject of active research and a motivation for our work.
+By combining the two ideas (pruning and LTH) we arrive at a new potential technique for raising neural network performance. If we are able to remove parts of the network without hurting the performance (pruning) and the fitness of a part of a network is determined at initialization, perhaps we could re-initialize the unnecessary network parts (i. e. draw more “lottery tickets”), leading to a better-performing network.
 
 # Preliminaries
 
 Before jumping straight into the techniques we employed and the results we obtained, we need to lay down some groundwork. We assume you have some background in machine learning and in deep learning in particular. Here is a short glossary of the most important terms used in this post.
 
 * **Transformer** <br/>
-    Transformer is the leading modern neural network architecture. To keep things concise, we refer you to <illustrated transformer> if you want to learn more about it. The most important thing in this blogpost is that a Transformer consists of many blocks stacked on top of each other, with each of the blocks containing multi-head attention mechanism and a feed-forward layer. This blogpost focuses on recycling neurons in the feed-forward layer. 
-    <dwa słowa, dlaczego atakujemy tę część a nie np atencję>
+    Transformer is the leading modern neural network architecture. To keep things concise, we refer you to the [Annotated Transformer](http://nlp.seas.harvard.edu/annotated-transformer/) if you want to learn more about it. The most important thing in this blogpost is that a Transformer consists of many blocks stacked on top of each other, with each of the blocks containing multi-head attention mechanism and a feed-forward layer. This blogpost focuses on recycling neurons in the feed-forward layer.
+
+    We focus on the feed-forward layer, because it is the most computationally demanding part of commonly-used transformer models and, in large models, it contains the majority of the parameters. At the same time, the amount of research focusing on the attention mechanism is overwhelming, suggesting that the feed-forward layer is a relatively unexplored area.
+
 * **Neuron** <br/>
-    Neurons are the basic building blocks of artificial neural networks. A neuron consists of some weights going “into” the neuron ($w_{in}\text{'s}$), an activation function (we use ReLU), and the weights going “out” of the neuron ($w_{out}\text{'s}$). Technically speaking, the neurons' weights are a column and a row of two matrices.
-    <coś o tym, że u nas zawsze są dwa bloki liniowe + napisać o macierzach>
+    Neurons are the basic building blocks of artificial neural networks. A neuron consists of some weights going “into” the neuron ($w_{in}\text{'s}$), an activation function (we use ReLU), and the weights going “out of" the neuron ($w_{out}\text{'s}$). Technically speaking, the neurons' weights are the parameters in the corresponding column and row of the two feed-forward matrices.
+
 * **Pruning** (structured and unstructured) <br/>
     Pruning is a technique used to induce sparsity and decrease the parameter count in a neural network. It is basically a fancy name for deleting the least important neurons (structured pruning) or weights (unstructured pruning). A typical implementation realizes this by either multiplying the output of the deleted neurons by 0 or setting the weights of the neuron to 0. A widely-used proxy for the importance of a neuron or weight is its magnitude.
+
 * **Magnitude** <br/>
     The magnitude of a neuron is given as $M=\sqrt{\sum{w_{in}^2} \sum{w_{out}^2}}$. The magnitude of a weight is simply its absolute value.
+
+## The goal
+<!--
+Napisać o modelu i dff-ach.
+The main goal of our work was to improve the performance of a transformer model by recycling neurons. Typically the $dff$ in the transformer
+-->
+
+{{< include plots_mp/_dffs_loss.qmd >}}
+
 
 # Understanding neuron magnitudes
 
@@ -77,7 +89,9 @@ As a side note: interestingly, we noticed that this discrepancy does not happen 
 
 In order to find the ideal neuron distribution, we decided to give special attention to the feed-forward (FF) component of the network. <zmienić poprzednie zdanie> We periodically froze all parts of the network except for the FF component and continued to train it for several batches of data. We hypothesized that in this scenario, weaker neurons might "catch up," resulting in a more even distribution. The results of this experiment can be seen in the following plot.
 
+```
 {{< include plots_jk/_full_ret.qmd >}}
+```
 
 We have also examined the scenario of retraining only small magnitude neurons, only large magnitude neurons and random subsets. How does it affect the performance? The results are depicted on the following plot.
  
@@ -161,28 +175,41 @@ Starając się wyjaśnić nasze dotychczasowe problemy, zwróciliśmy uwagę na 
 
 where \alpha was frozen and \beta trainable. We have noticed that this way we were able to make training loss dynamics smoother, but still without any positive effect.
 
+```
 {{< include plots_jk/_smooth_fig.qmd >}}
+```
 
 In general, we couldn’t beat the baseline in terms of performance.
 
 # Tangent - Midpoint Loss
 
-While working towards the main goal of the project, we started investigating the distribution of neuron magnitudes during the training [link do sekcji z blogposta]. We noticed that the magnitude distribution is quite uneven - a large percentage of neurons remains small, and the distribution is right-skewed.
+While working towards the main goal of the project, we started investigating the distribution of neuron magnitudes during the training. We noticed that the magnitude distribution is quite uneven - a large percentage of neurons remains small, and the distribution is right-skewed.
 Since the goal of our project was to reduce the number of low-quality, i.e., small neurons, we came up with a pretty risky solution: Midpoint Loss.
-The idea was to introduce an additional loss term that would encourage neuron growth and ``even-ness'' of the magnitude distribution. The general equation for the midpoint loss is:
+The idea was to introduce an additional loss term that would encourage neuron growth and "even-ness" of the magnitude distribution. The general equation for the midpoint loss is:
 
 $$ Loss = \sum_{l = 1}^{L} \sum_{n = 1}^{dff} dist(M_{l,n}, stop\_grad(avg(M_{l,*})))$$
 where:
 
 * $M_{l,n}$ - magnitude of th $n^{\text{th}}$ neuron in the $l^{\text{th}}$ layer. In some experiments we used the $log$ of the magnitude.
-* $dist$ - distance function, typically $l_1$, $l_2$
+* $dist$ - distance function, typically $l_1$, $l_2$.
 * $avg$ - arithmetic mean. In some experiments, median was used instead due to its robustness to outliers.
+* $L$ - number of layers.
+* $dff$ - number of neurons in a layer. In some experiments, we only summed over neurons with magnitude below the average magnitude of the layer, to encourage growth of small neurons. 
+* $stop\_grad$ - stops the gradient from flowing through. Without stopping the gradient, the loss computation becomes untractable.
+
 
 Since this idea is quite similar to weight decay, we decided not to optimize this term with Adam, but to split it from the task loss and optimize it using simple gradient descent - a similar technique is used in AdamW to incorporate weight decay loss term.
+```
+{{< include plots_mp/_mpl_magnitudes.qmd >}}
+```
+Midpoint loss achieved the goal of boosting the small neurons, however it failed to make a positive impact on the model's performance.
 
-<plot, że iwd zmienia dystrybucję magnitude>
-<wariacje nt. Plotu ze strzałkami tłumaczące różne opcje w immunity>
+{{< include plots_mp/_mpl_loss.qmd >}}
+
+<!---
+ <wariacje nt. Plotu ze strzałkami tłumaczące różne opcje w immunity>
+-->
 
 # Takeaways
 
-Takeaways from the project. Test test2
+Takeaways from the project. Test test2  
