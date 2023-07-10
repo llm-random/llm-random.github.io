@@ -87,26 +87,28 @@ One of the key inspirations for our work was structured pruning, where neuron ma
 {{< include plots_jk/_magnitudes.qmd >}}
 
 <br/>
-<!--Opis wykresu. Nie wiem czy nie wywalić tego layer8, wystarczy o nim wspomnieć-->
-This discovery raised several questions. Are the majority of neurons with very small magnitudes insignificant? Can they be dropped? Or could it be that these "small" neurons are activated rarely, but are crucial for certain tasks? Alternatively, perhaps when combined, they contribute significantly to the overall performance? Although we initially expected a different distribution, we wanted to explore and find the "ideal" distribution of neurons.
 
-As a side note: interestingly, we noticed that this discrepancy does not happen in the last layers of the network. As an example, below you can examine magnitudes for neurons in the 8th FF layer of the network.
+In the early stages of training, it's clear to see the neurons split into two unique groups, one featuring much lower magnitudes than the other. This finding opens up a multitude of discussion topics. It can be speculated that the neurons belonging to the group with smaller magnitudes potentially don't hold much importance. There's an option to consider eliminating them. However, it's also possible that these minor neurons, though activated seldom, play a critical role in specific tasks.
+
+Notably, we noticed that this discrepancy does not happen in the last layers of the network. As an example, below you can examine magnitudes for neurons in the 8th FF layer of the network.
 
 {{< include plots_jk/_layer8.qmd >}}
 
 <br/>
-
-<!--też nwm czy to ideal dist jest tu istotne-->In order to find the ideal neuron distribution, we decided to give special attention to the feed-forward (FF) component of the network. <zmienić poprzednie zdanie> We periodically froze all parts of the network except for the FF component and continued to train it for several batches of data. We hypothesized that in this scenario, weaker neurons might "catch up," resulting in a more even distribution. The results of this experiment can be seen in the following plot.
+ After examining these experiments, we were trying to understand why in the early layers we observed two distinct groups of neurons, categorized by their magnitudes. One possible explanation is that certain parts of the network receive a smaller signal and are slower to improve in training. We designed an experiment to check that.
+ We periodically froze all parts of the network except for the feed-forward component and continued to train it for several batches of data. We hypothesized that in this scenario, weaker neurons might _catch up,_ resulting in a more even distribution. We called this procedure _overtraining_&nbsp; feed-forward layer. It's important to note that this approach is impractical and computationally heavy, but we wanted to use it for the purpose of illustration. The results are depicted in the following plot.
 
 {{< include plots_jk/_full_ret.qmd >}}
 
 <br/>
 
-We have also examined the scenario of retraining only small magnitude neurons, only large magnitude neurons and random subsets. How does it affect the performance? The results are depicted on the following plot.
+<!--improve-->We can see that the group of "weaker" neurons has moved to the right after performing additional training of the FF part. However, neurons still form two distinct groups: overtraining the whole layer is not enough for the weaker ones to catch up. In the next experiment, we have examined the scenario of retraining only small magnitude neurons, only large magnitude neurons and random subsets. How does it affect the performance? The results are depicted on the following plot.
 
 {{< include plots_jk/_overtrain_loss.qmd >}}
 
-Interestingly, retraining only the smallest neurons yields the best results when compared to reinforcing high-magnitude neurons or random subsets. This provided a compelling argument in favor of our technique. However, it is important to note that these experiments were based on pretraining relatively small, BERT-based models. We were curious to see how our observations would translate to well-established, large-scale foundation models like BERT Large or T5.
+<!--improve-->Overtraining only the smallest neurons yields the best results when compared to reinforcing high-magnitude ones. Notably, overtraining the small ones gives similar gains in performance to working on the entire layer! Contrarily, ampifying the highest ones gives gains similar to no overtraining at all. This provides a compelling argument in favor of our technique. <!--explain why-->
+
+ So far, we have performed a series of experiments on relatively small architectures. We were curious to see how our observations would translate to well-established, large-scale foundation models like BERT Large or T5.
 
 {{< include plots_mp/_bert_ff12.qmd >}}
 {{< include plots_mp/_t5_ff5.qmd >}}
@@ -143,17 +145,12 @@ As you can see, removing low magnitude neurons hurts the model the least, and re
 The most straightforward reinitialization scheme is to sample the weights of the reinitialized neurons from the initial distribution. After examining the performance of this solution, we could not see any difference between recycling and vanilla training. As a sanity check, we have examined the histogram presenting the number of times each neuron was recycled, discovering that the same small subset of neurons was being reinitialized over and over during training. As we have seen <link do distr throughout training>, on average magnitude of neurons grows throughout the training. Therefore, the newly sampled neurons have, on average, lower magnitudes than non-recycled neurons and are unable to catch up to non-recycled neurons before another selection phase. Thus, the recycled neurons are caught up in a vicious cycle in which they are always recycled before achieving high magnitude.
 
 
-::: {#fig-elephant}
+{{< include plots_mp/_vc_vs_baseline.qmd >}}
 
 {{< include plots_mp/_vs_histogram.qmd >}}
 
-Figure description
-:::
 
-{{< include plots_mp/_vc_vs_baseline.qmd >}}
-
-
-<spróbować zrobić diagram z `vicious cycle`>
+<!--spróbować zrobić diagram z `vicious cycle`-->
 
 ### Immunity
 
@@ -204,17 +201,13 @@ where:
 
 
 Since this idea is quite similar to weight decay, we decided not to optimize this term with Adam, but to split it from the task loss and optimize it using simple gradient descent - a similar technique is used in AdamW to incorporate weight decay loss term.
-```
+
 {{< include plots_mp/_mpl_magnitudes.qmd >}}
-```
+
 Midpoint loss achieved the goal of boosting the small neurons, however it failed to make a positive impact on the model's performance.
 
 {{< include plots_mp/_mpl_loss.qmd >}}
 
 <!---
- <wariacje nt. Plotu ze strzałkami tłumaczące różne opcje w immunity>
+ <wariacje nt. Plotu ze strzałkami tłumaczące różne opcje w immunity>. Konkluzje
 -->
-
-# Conclusions
-
-
