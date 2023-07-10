@@ -44,7 +44,7 @@ By combining the two ideas (pruning and LTH) we arrive at a new potential techni
 
 # Preliminaries
 
-Before jumping straight into the techniques we employed and the results we obtained, we need to lay down some groundwork. We assume you have some background in machine learning and in deep learning in particular. Here is a short glossary of the most important terms used in this post.
+Before we move to the presentation of our experiments and findings, let's first discuss our training setup, define key terminologies, and go over the basics.
 
 ## Model and training setup
 Our model is BERT blah blah...
@@ -54,11 +54,10 @@ Our model is BERT blah blah...
 
     We focus on the feed-forward layer, because it is the most computationally demanding part of commonly-used transformer models and, in large models, it contains the majority of the parameters. At the same time, the amount of research focusing on the attention mechanism is overwhelming, suggesting that the feed-forward layer is a relatively unexplored area.
 
+In the following part of this post, we will often use the terms of neuron and its magnitude. Below are the definitions we used.
+
 * **Neuron** <br/>
     Neurons are the basic building blocks of artificial neural networks. A neuron consists of some weights going “into” the neuron ($w_{in}\text{'s}$), an activation function (we use ReLU), and the weights going “out of" the neuron ($w_{out}\text{'s}$). Technically speaking, the neurons' weights are the parameters in the corresponding column and row of the two feed-forward matrices.
-
-* **Pruning** (structured and unstructured) <br/>
-    Pruning is a technique used to induce sparsity and decrease the parameter count in a neural network. It is basically a fancy name for deleting the least important neurons (structured pruning) or weights (unstructured pruning). A typical implementation realizes this by either multiplying the output of the deleted neurons by 0 or setting the weights of the neuron to 0. A widely-used proxy for the importance of a neuron or weight is its magnitude.
 
 * **Magnitude** <br/>
     The magnitude of a neuron is given as $M=\sqrt{\sum{w_{in}^2} \sum{w_{out}^2}}$. The magnitude of a weight is simply its absolute value.

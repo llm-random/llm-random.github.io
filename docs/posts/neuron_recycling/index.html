@@ -186,15 +186,17 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="preliminaries" class="level1">
 <h1>Preliminaries</h1>
-<p>Before jumping straight into the techniques we employed and the results we obtained, we need to lay down some groundwork. We assume you have some background in machine learning and in deep learning in particular. Here is a short glossary of the most important terms used in this post.</p>
+<p>Before we move to the presentation of our experiments and findings, let’s first discuss our training setup, define key terminologies, and go over the basics.</p>
 <section id="model-and-training-setup" class="level2">
 <h2 class="anchored" data-anchor-id="model-and-training-setup">Model and training setup</h2>
 <p>Our model is BERT blah blah…</p>
 <ul>
 <li><p><strong>Transformer</strong> <br> Transformer is the leading modern neural network architecture. To keep things concise, we refer you to the <a href="http://nlp.seas.harvard.edu/annotated-transformer/">Annotated Transformer</a> if you want to learn more about it. The most important thing in this blogpost is that a Transformer consists of many blocks stacked on top of each other, with each of the blocks containing multi-head attention mechanism and a feed-forward layer. This blogpost focuses on recycling neurons in the feed-forward layer.</p>
 <p>We focus on the feed-forward layer, because it is the most computationally demanding part of commonly-used transformer models and, in large models, it contains the majority of the parameters. At the same time, the amount of research focusing on the attention mechanism is overwhelming, suggesting that the feed-forward layer is a relatively unexplored area.</p></li>
+</ul>
+<p>In the following part of this post, we will often use the terms of neuron and its magnitude. Below are the definitions we used.</p>
+<ul>
 <li><p><strong>Neuron</strong> <br> Neurons are the basic building blocks of artificial neural networks. A neuron consists of some weights going “into” the neuron (<span class="math inline">\(w_{in}\text{'s}\)</span>), an activation function (we use ReLU), and the weights going “out of” the neuron (<span class="math inline">\(w_{out}\text{'s}\)</span>). Technically speaking, the neurons’ weights are the parameters in the corresponding column and row of the two feed-forward matrices.</p></li>
-<li><p><strong>Pruning</strong> (structured and unstructured) <br> Pruning is a technique used to induce sparsity and decrease the parameter count in a neural network. It is basically a fancy name for deleting the least important neurons (structured pruning) or weights (unstructured pruning). A typical implementation realizes this by either multiplying the output of the deleted neurons by 0 or setting the weights of the neuron to 0. A widely-used proxy for the importance of a neuron or weight is its magnitude.</p></li>
 <li><p><strong>Magnitude</strong> <br> The magnitude of a neuron is given as <span class="math inline">\(M=\sqrt{\sum{w_{in}^2} \sum{w_{out}^2}}\)</span>. The magnitude of a weight is simply its absolute value.</p></li>
 </ul>
 </section>
