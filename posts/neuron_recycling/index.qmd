@@ -62,7 +62,7 @@ In the following part of this post, we will often use the terms of neuron and it
     The magnitude of a neuron is given as $M=\sqrt{\sum{w_{in}^2} \sum{w_{out}^2}}$. The magnitude of a weight is simply its absolute value.
 
 ## Pruning
-Pruning is a technique used to induce sparsity and decrease the parameter count in a neural network. In simple terms, it means deleting the least important neurons (structured pruning) or weights (unstructured pruning). A typical implementation realizes this by either multiplying the output of the deleted neurons by 0 or setting the weights of the neuron to 0. A widely-used proxy for the importance of a neuron or weight is its magnitude. You may find it counterintuitive, but we can even remove the whole FF Layer and the model will still work. This is because FF can be approximated by Attention. 
+Pruning is a technique used to induce sparsity and decrease the parameter count in a neural network. In simple terms, it means deleting the least important neurons (structured pruning) or weights (unstructured pruning). A typical implementation realizes this by either multiplying the output of the deleted neurons by 0 or setting the weights of the neuron to 0. A widely-used proxy for the importance of a neuron or weight is its magnitude. You may find it counterintuitive, but we can even remove the whole FF Layer and the model will still work. This is because FF can be approximated by Attention.
 
 It's important to note that the Transformer _can be trained _  totally without the feed-forward layer (with a loss in performance), since the model can learn to represent the same transformation using attention. Below we present a plot with loss curves of the model gradually pruned at the FF layer, starting in step $10{,}000$, such that the layer is completely masked in the end of the training.
 
@@ -136,7 +136,7 @@ After examining the pruning literature [citations] we have found that the simple
 
 {{< include plots_jk/_pruning.qmd >}}
 
-As you can see, removing low magnitude neurons hurts the model the least, and removing high magnitude ones cases the largest loss. This is a good argument that this criterion correlates well with neuron significance. 
+As you can see, removing low magnitude neurons hurts the model the least, and removing high magnitude ones cases the largest loss. This is a good argument that this criterion correlates well with neuron significance.
 
 ## Baseline recycling
 
