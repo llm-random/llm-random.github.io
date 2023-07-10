@@ -92,7 +92,7 @@ In order to find the ideal neuron distribution, we decided to give special atten
 
 We have also examined the scenario of retraining only small magnitude neurons, only large magnitude neurons and random subsets. How does it affect the performance? The results are depicted on the following plot.
 
-{{< include plots_jk/_over_fig.qmd >}}
+{{< include plots_jk/_overtrain_loss.qmd >}}
 
 Interestingly, retraining only the smallest neurons yields the best results when compared to reinforcing high-magnitude neurons or random subsets. This provided a compelling argument in favor of our technique. However, it is important to note that these experiments were based on pretraining relatively small, BERT-based models. We were curious to see how our observations would translate to well-established, large-scale foundation models like BERT Large or T5.
 
@@ -168,13 +168,17 @@ A feed-forward layer consists of two matrices. Each time a neuron is reinitializ
 ## Copying existing neurons
 At this stage of our project, we gained interest in the topic of growing neural networks. Intuitively, this problem has a similar part, in which we want to add new neurons or weights. In the case of Large Language Models, the topic is mentioned in [Gopher]. The authors describe that for their experiments, copying existing neurons was the best strategy.  We have also tried this strategy, but without positive results.
 
+{{< include plots_jk/_copying.qmd >}}
+
+## Smooth recycling
+
 Starając się wyjaśnić nasze dotychczasowe problemy, zwróciliśmy uwagę na dyskretną naturę naszej techniki, as opposed to the continuous landscape of training/optimizers. To change this, we have modified our strategy to gradually change the value by linear interpolation, according to the rule
 
 <latex ze wzorkiem; może jakiś plot z naszymi górkami>,
 
 where \alpha was frozen and \beta trainable. We have noticed that this way we were able to make training loss dynamics smoother, but still without any positive effect.
 
-{{< include plots_jk/_smooth_fig.qmd >}}
+{{< include plots_jk/_smooth.qmd >}}
 
 In general, we couldn’t beat the baseline in terms of performance.
 

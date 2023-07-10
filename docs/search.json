@@ -95,7 +95,7 @@
     "href": "posts/neuron_recycling/index.html#copying-existing-neurons",
     "title": "Neuron Recycling",
     "section": "Copying existing neurons",
-    "text": "Copying existing neurons\nAt this stage of our project, we gained interest in the topic of growing neural networks. Intuitively, this problem has a similar part, in which we want to add new neurons or weights. In the case of Large Language Models, the topic is mentioned in [Gopher]. The authors describe that for their experiments, copying existing neurons was the best strategy. We have also tried this strategy, but without positive results.\nStarając się wyjaśnić nasze dotychczasowe problemy, zwróciliśmy uwagę na dyskretną naturę naszej techniki, as opposed to the continuous landscape of training/optimizers. To change this, we have modified our strategy to gradually change the value by linear interpolation, according to the rule\n&lt;latex ze wzorkiem; może jakiś plot z naszymi górkami&gt;,\nwhere was frozen and trainable. We have noticed that this way we were able to make training loss dynamics smoother, but still without any positive effect.\n\n\n\n\n                            \n                                            \n\n\nIn general, we couldn’t beat the baseline in terms of performance."
+    "text": "Copying existing neurons\nAt this stage of our project, we gained interest in the topic of growing neural networks. Intuitively, this problem has a similar part, in which we want to add new neurons or weights. In the case of Large Language Models, the topic is mentioned in [Gopher]. The authors describe that for their experiments, copying existing neurons was the best strategy. We have also tried this strategy, but without positive results."
   },
   {
     "objectID": "posts/neuron_recycling/index.html#model-and-training-setup",
@@ -117,5 +117,12 @@
     "title": "Neuron Recycling",
     "section": "Pruning",
     "text": "Pruning\nPruning is a technique used to induce sparsity and decrease the parameter count in a neural network. It is basically a fancy name for deleting the least important neurons (structured pruning) or weights (unstructured pruning). A typical implementation realizes this by either multiplying the output of the deleted neurons by 0 or setting the weights of the neuron to 0. A widely-used proxy for the importance of a neuron or weight is its magnitude. You may find it counterintuitive, but we can even remove the whole FF Layer and the model will still work. This is because FF can be approximated by Attention. Below is a plot with pruning.\n\n\n\n\n                                                    \n\n\nAs you can see, pruning is getting works just in step 35k, and no FF is slightly better in the end."
+  },
+  {
+    "objectID": "posts/neuron_recycling/index.html#smooth-recycling",
+    "href": "posts/neuron_recycling/index.html#smooth-recycling",
+    "title": "Neuron Recycling",
+    "section": "Smooth recycling",
+    "text": "Smooth recycling\nStarając się wyjaśnić nasze dotychczasowe problemy, zwróciliśmy uwagę na dyskretną naturę naszej techniki, as opposed to the continuous landscape of training/optimizers. To change this, we have modified our strategy to gradually change the value by linear interpolation, according to the rule\n&lt;latex ze wzorkiem; może jakiś plot z naszymi górkami&gt;,\nwhere was frozen and trainable. We have noticed that this way we were able to make training loss dynamics smoother, but still without any positive effect.\n\n\n\n\n                                                    \n\n\nIn general, we couldn’t beat the baseline in terms of performance."
   }
 ]
