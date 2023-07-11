@@ -14,17 +14,10 @@
     "text": "Magnitudes in openly available pretrained models\n\nSo far, we have performed a series of experiments on relatively small architectures. We were curious to see how our observations would translate to well-established, large-scale foundation models like BERT Large or T5.\n\n\n\n\n                                                    \n\n\n\n\n\n                                                    \n\n\nThere is a clear difference between the plots above. Magnitudes in T5 seem similar to those in our smaller models, while BERT presents a more balanced distribution. What could account for these variations? We discovered that the use of weight decay in BERT Large plays a significant role. This simple but widely used technique has an important impact on the distribution. \nThese findings support the idea of exploring neuron recycling and offer a good foundation for further experiments. In the next sections, we will present results on this topic and share our insights."
   },
   {
-    "objectID": "posts/welcome/index.html",
-    "href": "posts/welcome/index.html",
-    "title": "Welcome To Our Blog",
-    "section": "",
-    "text": "This is the first post in our blog.\nWelcome!"
-  },
-  {
     "objectID": "index.html",
     "href": "index.html",
     "title": "llm-random",
     "section": "",
-    "text": "Neuron Recycling\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nJul 11, 2023\n\n\nJakub Krajewski *, Maciej Pióro *, Sebastian Jaszczur †, Marek Cygan ‡\n\n\n\n\n\n\n  \n\n\n\n\nWelcome To Our Blog\n\n\n\n\n\n\n\nnews\n\n\n\n\n\n\n\n\n\n\n\nMay 31, 2023\n\n\nMaciej Pióro\n\n\n\n\n\n\nNo matching items"
+    "text": "Neuron Recycling\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nJul 11, 2023\n\n\nJakub Krajewski *, Maciej Pióro *, Sebastian Jaszczur †, Marek Cygan ‡\n\n\n\n\n\n\nNo matching items"
   }
 ]
