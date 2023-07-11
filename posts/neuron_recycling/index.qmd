@@ -142,33 +142,35 @@ As you can see, removing low magnitude neurons hurts the model the least, and re
 
 ### Baseline recycling
 
-The most straightforward reinitialization scheme is to sample the weights of the reinitialized neurons from the initial distribution. After examining the performance of this solution, we could not see any difference between recycling and vanilla training. As a sanity check, we have examined the histogram presenting the number of times each neuron was recycled, discovering that the same small subset of neurons was being reinitialized over and over during training. As we have seen <link do distr throughout training>, on average magnitude of neurons grows throughout the training. Therefore, the newly sampled neurons have, on average, lower magnitudes than non-recycled neurons and are unable to catch up to non-recycled neurons before another selection phase. Thus, the recycled neurons are caught up in a vicious cycle in which they are always recycled before achieving high magnitude.
-
+The most straightforward reinitialization scheme is to sample the weights of the reinitialized neurons from the initial distribution. After examining the performance of this solution, we could not see any difference between recycling and vanilla training.
 
 {{< include plots_mp/_vc_vs_baseline.qmd >}}
 
+As a sanity check, we have examined the histogram presenting the number of times each neuron was recycled, discovering that the same small subset of neurons was being reinitialized over and over during training.
+
 {{< include plots_mp/_vs_histogram.qmd >}}
 
+As we have seen<!--link do distr throughout training-->, on average magnitude of neurons grows throughout the training. Therefore, sampling from the initial distribution will cause the reycycled neurons to have even lower magnitudes. As an effect, they are unable to catch up to before another selection phase. Thus, the recycled neurons are caught up in a vicious cycle in which they are always recycled before achieving high magnitude.
 
 <!--spróbować zrobić diagram z `vicious cycle`-->
 
 ### Immunity
 
-Another thing we tried to make reinitialization work was Immunity. The idea here is to encourage diverse recycling by making each recycled neuron immune to further recycling for some predefined number of steps. We hypothesized that a reinitialized neuron needs some time to grow, but in our initial setting, the neuron is recycled before enough growth happens, keeping the smaller neurons in a vicious cycle of periodically reoccurring reinitialization.
-Unfortunately, in our experiments, the reinitialized neurons failed to grow even if given immunity. At the same time immunity of the small neurons lead to recycling of the large neurons, hurting the model’s performance.
+To address the problem we observed in the previous approach, we tried another strategy - recycling with _immunity_. The idea here is to encourage diverse recycling by making each recycled neuron immune to further recycling for some predefined number of steps. We hypothesized that a reinitialized neuron needs some time to grow, which was not possible in the initial setting. The following plot illustrates that immunity prevents the recycled neurons from being catched in a vicious cycle.
 
 {{< include plots_mp/_7vs3_histogram.qmd >}}
 
+Higher number of immunity rounds (i.e. number of selection phases when a newly recycled neuron can't be chosen) causes more neurons to be reinitialized at least once. Unfortunately, this eventually causes well-behaving parts of the network to be chosen for recycling. As an effect, the performance drops.
+
 {{< include plots_mp/_7vs3vsBaseline_loss.qmd >}}
 
+### Modifying reinitialization distribution
 
-### Modifying reinitialization weights distribution
-
-As we have pointed out before, magnitude and weight distribution drifts away from the initial distribution as the training progresses. However, during our initial attempts, we initialized the weights sampling from the initial distribution. To fix this issue, we decided to try out another weight sampling technique.
-A feed-forward layer consists of two matrices. Each time a neuron is reinitialized, the corresponding row and column in the matrices are filled with new (reinitialized) weights. The new technique, when replacing the weights, used the normal distribution with mean and standard deviation equal to the mean and standard deviation of all the weights in the respective matrix. This approach, like immunity, eliminated the vicious cycle. However, this process introduced a lot of noise with adverse effect on the model's loss.
-
+As we have pointed out before, magnitude and weight distribution drifts away from the initial distribution as the training progresses. However, during our initial attempts, we initialized the weights sampling from the initial distribution. To fix this issue, we decided to try out another weight sampling technique. In this approach we used the normal distribution with mean and standard deviation equal to the mean and standard deviation of all the weights in the respective matrix. This approach, like immunity, eliminated the vicious cycle problem.
 
 {{< include plots_mp/_plot_current_recycling_histogram.qmd >}}
+
+However, this process introduced a lot of noise with adverse effect on the model's loss.
 
 {{< include plots_mp/_plot_init_vs_current.qmd >}}
 
@@ -179,7 +181,7 @@ At this stage of our project, we gained interest in the topic of growing neural 
 
 ### Smooth recycling
 
-In an effort to explain our past problems, we pointed out the discrete nature of our technology, as opposed to the continuous landscape of training/optimizers. To change this, we have modified our strategy to gradually change the value by linear interpolation. We have noticed that this way we were able to make training loss dynamics smoother, but without beating the baseline.
+In an effort to explain our past problems, we pointed out the discrete nature of our technique, as opposed to the continuous landscape of training/optimizers. To change this, we have modified our strategy to gradually change the value by linear interpolation. We have noticed that this way we were able to make training loss dynamics smoother, but without beating the baseline.
 
 {{< include plots_jk/_smooth.qmd >}}
 
