@@ -1,12 +1,12 @@
 ---
 title: "Neuron Recycling"
 author:
-    -   name: Jakub Krajewski
+    -   name: Jakub Krajewski †
         equal-contributor: true
         affiliations:
         -   ref: ideas
         -   ref: uow
-    -   name: Maciej Pióro
+    -   name: Maciej Pióro †
         equal-contributor: true
         affiliations:
         -   ref: ideas
@@ -15,7 +15,7 @@ author:
         affiliations:
         -   ref: ideas
         -   ref: uow
-    -   name: Marek Cygan
+    -   name: Marek Cygan 
         affiliations:
         -   ref: uow
 affiliations:
@@ -29,9 +29,11 @@ categories: []
 image: "logo.png"
 format:
   html:
-    include-in-header:
+    template-partials:
+    - title-block.html
+    include-in-header:  
       - text: |
-          <script charset="utf-8" src="https://cdn.plot.ly/plotly-2.20.0.min.js">
+          <script charset="utf-8" src="https://cdn.plot.ly/plotly-2.20.0.min.js"/>
 ---
 
 Sparse neural networks have garnered attention due to their theoretical promise of lowered computational demands and memory savings. However, to this date, the theoretical gains have largely failed to materialize due to the lack of hardware support for this kind of models. In this work, we explore the idea of neuron recycling which is inspired by pruning - a method often employed to induce sparsity in neural networks. We also present lessons we have learned along the way.
@@ -150,7 +152,7 @@ As a sanity check, we have examined the histogram presenting the number of times
 
 {{< include plots_mp/_vs_histogram.qmd >}}
 
-As we have seen<!--link do distr throughout training-->, on average magnitude of neurons grows throughout the training. Therefore, sampling from the initial distribution will cause the reycycled neurons to have even lower magnitudes. As an effect, they are unable to catch up to before another selection phase. Thus, the recycled neurons are caught up in a vicious cycle in which they are always recycled before achieving high magnitude.
+As we have seen <!--link do distr throughout training-->, on average magnitude of neurons grows throughout the training. Therefore, sampling from the initial distribution will cause the reycycled neurons to have even lower magnitudes. As an effect, they are unable to catch up to before another selection phase. Thus, the recycled neurons are caught up in a vicious cycle in which they are always recycled before achieving high magnitude.
 
 <!--spróbować zrobić diagram z `vicious cycle`-->
 
@@ -191,7 +193,7 @@ While working towards the main goal of the project, we started investigating the
 Since the goal of our project was to reduce the number of low-quality, i.e., small neurons, we came up with a pretty risky solution: Midpoint Loss.
 The idea was to introduce an additional loss term that would encourage neuron growth and "even-ness" of the magnitude distribution. The general equation for the midpoint loss is:
 
-$$ Loss = \sum_{l = 1}^{L} \sum_{n = 1}^{dff} dist(M_{l,n}, stop\_grad(avg(M_{l,*})))$$
+$$ Loss = \sum_{l = 1}^{L} \sum_{n = 1}^{d_\text{ff}} dist(M_{l,n}, stop\_grad(avg(M_{l,*})))$$
 where:
 
 * $M_{l,n}$ - magnitude of th $n^{\text{th}}$ neuron in the $l^{\text{th}}$ layer. In some experiments we used the $log$ of the magnitude.
