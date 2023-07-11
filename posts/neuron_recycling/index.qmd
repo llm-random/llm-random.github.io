@@ -39,74 +39,76 @@ Sparse neural networks have garnered attention due to their theoretical promise 
 
 # Introduction
 
-Pruning is a well-established technique used to sparsify neural networks. It relies on the fact that typically a large part of a trained neural network can be masked without impacting the accuracy of the network, albeit often requiring additional fine-tuning in order to regain some lost performance. Despite multiple works proposing various neuron-selection criteria for pruning, magnitude-based pruning remains a viable option. The Lottery Ticket Hypothesis is a major finding on the way to explain how the initialization impacts neural networks. The main point of the LTH is that through iterative pruning, performant subnetworks depending on the initialization can be found in neural networks. Those well-initialized network fragments are the namesake of LTH (the “lottery tickets”). Although some notions of the original LTH paper have been challenged, it has remained the subject of active research and a motivation for our work.
+Pruning is a well-established technique used to sparsify neural networks. It relies on the fact that typically a large part of a trained neural network can be masked without impacting the accuracy of the network, albeit often requiring additional fine-tuning in order to regain some lost performance. Despite multiple works proposing various neuron-selection criteria for pruning, magnitude-based pruning remains a viable option. The Lottery Ticket Hypothesis is a major finding on the way to explain how the initialization impacts neural networks. The main point of the LTH is that through iterative pruning, performant subnetworks depending on the initialization can be found in neural networks. Those well-initialized network fragments are the namesake of LTH (the “lottery tickets”). Although some notions of the original LTH paper have been challenged, it has remained the subject of active research and a motivation for our work. <!--many citations to this part-->
 By combining the two ideas (pruning and LTH) we arrive at a new potential technique for raising neural network performance. If we are able to remove parts of the network without hurting the performance (pruning) and the fitness of a part of a network is determined at initialization, perhaps we could re-initialize the unnecessary network parts (i. e. draw more “lottery tickets”), leading to a better-performing network.
 
 # Preliminaries
 
-Before we move to the presentation of our experiments and findings, let's first discuss our training setup, define key terminologies, and go over the basics.
+Before we move to the presentation of our experiments and findings, let's first discuss the training setup, define key terminology, and go over the basics.
 
-## Model and training setup
-In our project, we are focusing on the Transformer <!--[citation]-->, since it's a major architecture across different domains <!--[citation]-->. For the specific type of the model, we are working on encoder-only BERT <!--[citation]-->. Taking into consideration available computational resources and expected iteration time (we wanted to try as many options as possible), we decided to opt for the BERT Medium configuration (with $d_\text{model}=512$ and $8$ attention heads). We focus on the feed-forward layer, because it is the most computationally demanding part of commonly-used transformer models and, in large models, it contains the majority of the parameters. At the same time, the amount of research focusing on the attention mechanism is overwhelming, suggesting that the feed-forward layer is a relatively unexplored area.
+### Model and training setup
+In our project, we are focusing on the Transformer<!--[citation]-->, since it's a major architecture across different domains <!--[citation]-->. For the specific type of the model, we are working on encoder-only BERT <!--[citation]-->. Taking into consideration available computational resources and expected iteration time (we wanted to try as many options as possible), we decided to opt for the BERT Medium configuration (with $d_\text{model}=512$ and $8$ attention heads). We focus on the feed-forward layer, because it is the most computationally demanding part of commonly-used transformer models and, in large models, it contains the majority of the parameters. At the same time, the amount of research focusing on the attention mechanism is overwhelming, suggesting that the feed-forward layer is a relatively unexplored area.
 
 We trained the model for $80{,}000$ steps (around compute-optimal point), with Adam, using batch size of $256$ and learning rate of $0.001$.
 
-It has been shown <!--citation-->, that the initialization of the weights in neural networks is of utmost importance to the convergence of the network. In all our experiments, we initialized the linear layers using the following distribution: <latex> as per <!--citation-->.
+It has been shown <!--citation--> that the initialization of the weights in neural networks is of utmost importance to the convergence of the network. In all our experiments, we initialized the linear layers using the following distribution: <latex> as per <!--citation-->.
 
-In the following part of this post, we will often use the terms of neuron and its magnitude. Below are the definitions we employ.
+In the following part of this post, we will often use the terms of neuron and magnitude. Below are the definitions we employ.
 
 * **Neuron** <br/>
-    Neurons are the basic building blocks of artificial neural networks. A neuron consists of some weights going “into” the neuron ($w_{in}\text{'s}$), an activation function (we use ReLU), and the weights going “out of" the neuron ($w_{out}\text{'s}$). Technically speaking, the neurons' weights are the parameters in the corresponding column and row of the two feed-forward matrices.
+    In the Transformer, feed-forward layer consists of two linear layers, with a nonlinearity in between. The first layer maps the input vector from $d_\text{model}$ to $d_\text{ff}$ dimension, and the second one from $d_\text{ff}$ back to $d_\text{model}$. Typically, $d_\text{ff}$ is four times greater than $d_\text{model}$. By neuron, we will understand all weights interacting with a particular coordinate in the hidden, $\mathbb{R}^{d_\text{ff}}$ space. In the `torch` implementation, a neuron's weights are the parameters in a given row of the first feed-forward matrix and in the corresponding column in the second one.
 
 * **Magnitude** <br/>
-    The magnitude of a neuron is given as $M=\sqrt{\sum{w_{in}^2} \sum{w_{out}^2}}$. The magnitude of a weight is simply its absolute value.
+    To calculate magnitude of a weight, we will use its absolute value. As the magnitude of a neuron we will use value of the expression $M=\sqrt{\sum{w_{in}^2} \sum{w_{out}^2}}$. <!--citation and some explanation-->
 
-## Pruning
-Pruning is a technique used to induce sparsity and decrease the parameter count in a neural network. In simple terms, it means deleting the least important neurons (structured pruning) or weights (unstructured pruning). A typical implementation realizes this by either multiplying the output of the deleted neurons by 0 or setting the weights of the neuron to 0. A widely-used proxy for the importance of a neuron or weight is its magnitude. You may find it counterintuitive, but we can even remove the whole FF Layer and the model will still work. This is because FF can be approximated by Attention. 
+### Pruning
+Pruning is a technique used to induce sparsity and decrease the parameter count in a neural network. In simple terms, it means deleting the least important neurons (structured pruning) or weights (unstructured pruning). A typical implementation realizes this by either multiplying the output of the deleted neurons by 0 or setting the weights of the neuron to 0. A widely-used proxy for the importance of a neuron or weight is its magnitude. You may find it counterintuitive, but we can even remove the whole FF Layer and the model will still work. This is because model can learn to represent the same transformation using attention.
 
-It's important to note that the Transformer _can be trained _  totally without the feed-forward layer (with a loss in performance), since the model can learn to represent the same transformation using attention. Below we present a plot with loss curves of the model gradually pruned at the FF layer, starting in step $10{,}000$, such that the layer is completely masked in the end of the training.
+<!--improve this paragraph--> Below we present a plot with loss curves of the model gradually pruned at the FF layer, starting in step $10{,}000$, such that the layer is completely masked in the end of the training. As a comparison, we also add regular model and the one without feed-forward layer.
 
 {{< include plots_jk/_pruning_masked_b.qmd >}}
 
-As you can see, the effect of pruning can't be visible for a significant fraction of the training time. It's also worth noting that in the end the model without FF Layer performs slightly better than the pruned one. This is because in the first case, Attention was trained to _adjust_ from the very beginning of the training.
+Interestingly, the effect of pruning can't be visible for a significant fraction of the training time. It's also worth noting that in the end the model without FF Layer performs slightly better than the pruned one. This is because in the first case, Attention was trained to _adjust_&nbsp; from the very beginning of the training.
 
-## The goal
+### The goal
 <!--
 Napisać o modelu i dff-ach.
 The main goal of our work was to improve the performance of a transformer model by recycling neurons. Typically the $d_\text{ff}$ in the transformer
 -->
-The end-goal of the project was to create a method that would allow us to make better use of the parameters in the feed-forward layer. In this context, a natural question arises - against what baseline should our results be compared? To answer this question, we trained the model with differing dimensionalities of the feed-forward layer. The results are presented below. The true BERT Medium configuration has $d_\text{ff}=2048$, and, as expected, the model's performance drops when the $d_\text{ff}$ is decreased and increases when the $d_\text{ff}$ is increased.
+<!--improve this paragraph-->The end-goal of the project was to create a method that would allow us to make better use of the parameters in the feed-forward layer. In this context, a natural question arises - against what baseline should our results be compared? To answer this question, we trained the model with differing dimensionalities of the feed-forward layer. The results are presented below. The true BERT Medium configuration has $d_\text{ff}=2048$, and, as expected, the model's performance drops when the $d_\text{ff}$ is decreased and increases when the $d_\text{ff}$ is increased.
 
 {{< include plots_mp/_dffs_loss.qmd >}}
 
 
 # Understanding neuron magnitudes
 
-One of the first natural questions we have asked ourselves, as we already knew that we wanted to take into consideration neuron magnitudes, was how does this metric behave and evolve during the training process. <rozbić to zdanie/zmienić> Intuitively, the magnitude of a neuron correlates with its significance. At first, we thought a histogram of neuron magnitudes would exhibit a normal distribution. However, our findings showed something different - the distribution follows a Pareto-like shape, with a majority of almost-zero or small values, as seen in the plot below.
+One of the key inspirations for our work was structured pruning, where neuron magnitude is often chosen as the measure of significance<!--citation-->. We were interested in how this metric evolves during the training process. At first, we thought a histogram of neuron magnitudes would exhibit a normal distribution. However, our experiments showed something different. The following graph shows evolution of neuron magnitudes throughout the training process.
 
 {{< include plots_jk/_magnitudes.qmd >}}
 
 <br/>
 
-This discovery raised several questions. Are the majority of neurons with very small magnitudes insignificant? Can they be dropped? Or could it be that these "small" neurons are activated rarely, but are crucial for certain tasks? Alternatively, perhaps when combined, they contribute significantly to the overall performance? Although we initially expected a different distribution, we wanted to explore and find the "ideal" distribution of neurons.
+In the early stages of training, it's clear to see the neurons split into two unique groups, one featuring much lower magnitudes than the other. This finding opens up a multitude of discussion topics. It can be speculated that the neurons belonging to the group with smaller magnitudes potentially don't hold much importance. There's an option to consider eliminating them. However, it's also possible that these minor neurons, though activated seldom, play a critical role in specific tasks.
 
-As a side note: interestingly, we noticed that this discrepancy does not happen in the last layers of the network. As an example, below you can examine magnitudes for neurons in the 8th FF layer of the network.
+Notably, we noticed that this discrepancy does not happen in the last layers of the network. As an example, below you can examine magnitudes for neurons in the 8th FF layer of the network.
 
 {{< include plots_jk/_layer8.qmd >}}
 
 <br/>
-
-In order to find the ideal neuron distribution, we decided to give special attention to the feed-forward (FF) component of the network. <zmienić poprzednie zdanie> We periodically froze all parts of the network except for the FF component and continued to train it for several batches of data. We hypothesized that in this scenario, weaker neurons might "catch up," resulting in a more even distribution. The results of this experiment can be seen in the following plot.
+ After examining these experiments, we were trying to understand why in the early layers we observed two distinct groups of neurons, categorized by their magnitudes. One possible explanation is that certain parts of the network receive a smaller signal and are slower to improve in training. We designed an experiment to check that.
+ We periodically froze all parts of the network except for the feed-forward component and continued to train it for several batches of data. We hypothesized that in this scenario, weaker neurons might _catch up,_ resulting in a more even distribution. We called this procedure _overtraining_&nbsp; feed-forward layer. It's important to note that this approach is impractical and computationally heavy, but we wanted to use it for the purpose of illustration. The results are depicted in the following plot.
 
 {{< include plots_jk/_full_ret.qmd >}}
 
 <br/>
 
-We have also examined the scenario of retraining only small magnitude neurons, only large magnitude neurons and random subsets. How does it affect the performance? The results are depicted on the following plot.
+<!--improve-->We can see that the group of "weaker" neurons has moved to the right after performing additional training of the FF part. However, neurons still form two distinct groups: overtraining the whole layer is not enough for the weaker ones to catch up. In the next experiment, we have examined the scenario of retraining only small magnitude neurons, only large magnitude neurons and random subsets. How does it affect the performance? The results are depicted on the following plot.
 
 {{< include plots_jk/_overtrain_loss.qmd >}}
 
-Interestingly, retraining only the smallest neurons yields the best results when compared to reinforcing high-magnitude neurons or random subsets. This provided a compelling argument in favor of our technique. However, it is important to note that these experiments were based on pretraining relatively small, BERT-based models. We were curious to see how our observations would translate to well-established, large-scale foundation models like BERT Large or T5.
+<!--improve-->Overtraining only the smallest neurons yields the best results when compared to reinforcing high-magnitude ones. Notably, overtraining the small ones gives similar gains in performance to working on the entire layer! Contrarily, ampifying the highest ones gives gains similar to no overtraining at all. This provides a compelling argument in favor of our technique. <!--explain why-->
+
+ So far, we have performed a series of experiments on relatively small architectures. We were curious to see how our observations would translate to well-established, large-scale foundation models like BERT Large or T5.
 
 {{< include plots_mp/_bert_ff12.qmd >}}
 {{< include plots_mp/_t5_ff5.qmd >}}
@@ -136,53 +138,50 @@ After examining the pruning literature [citations] we have found that the simple
 
 {{< include plots_jk/_pruning.qmd >}}
 
-As you can see, removing low magnitude neurons hurts the model the least, and removing high magnitude ones cases the largest loss. This is a good argument that this criterion correlates well with neuron significance. 
+As you can see, removing low magnitude neurons hurts the model the least, and removing high magnitude ones cases the largest loss. This is a good argument that this criterion correlates well with neuron significance.
 
-## Baseline recycling
+### Baseline recycling
 
-The most straightforward reinitialization scheme is to sample the weights of the reinitialized neurons from the initial distribution. After examining the performance of this solution, we could not see any difference between recycling and vanilla training. As a sanity check, we have examined the histogram presenting the number of times each neuron was recycled, discovering that the same small subset of neurons was being reinitialized over and over during training. As we have seen <link do distr throughout training>, on average magnitude of neurons grows throughout the training. Therefore, the newly sampled neurons have, on average, lower magnitudes than non-recycled neurons and are unable to catch up to non-recycled neurons before another selection phase. Thus, the recycled neurons are caught up in a vicious cycle in which they are always recycled before achieving high magnitude.
-
-
-::: {#fig-elephant}
-
-{{< include plots_mp/_vs_histogram.qmd >}}
-
-Figure description
-:::
+The most straightforward reinitialization scheme is to sample the weights of the reinitialized neurons from the initial distribution. After examining the performance of this solution, we could not see any difference between recycling and vanilla training.
 
 {{< include plots_mp/_vc_vs_baseline.qmd >}}
 
+As a sanity check, we have examined the histogram presenting the number of times each neuron was recycled, discovering that the same small subset of neurons was being reinitialized over and over during training.
 
-<spróbować zrobić diagram z `vicious cycle`>
+{{< include plots_mp/_vs_histogram.qmd >}}
 
-## Immunity
+As we have seen<!--link do distr throughout training-->, on average magnitude of neurons grows throughout the training. Therefore, sampling from the initial distribution will cause the reycycled neurons to have even lower magnitudes. As an effect, they are unable to catch up to before another selection phase. Thus, the recycled neurons are caught up in a vicious cycle in which they are always recycled before achieving high magnitude.
 
-Another thing we tried to make reinitialization work was Immunity. The idea here is to encourage diverse recycling by making each recycled neuron immune to further recycling for some predefined number of steps. We hypothesized that a reinitialized neuron needs some time to grow, but in our initial setting, the neuron is recycled before enough growth happens, keeping the smaller neurons in a vicious cycle of periodically reoccurring reinitialization.
-Unfortunately, in our experiments, the reinitialized neurons failed to grow even if given immunity. At the same time immunity of the small neurons lead to recycling of the large neurons, hurting the model’s performance.
+<!--spróbować zrobić diagram z `vicious cycle`-->
+
+### Immunity
+
+To address the problem we observed in the previous approach, we tried another strategy - recycling with _immunity_. The idea here is to encourage diverse recycling by making each recycled neuron immune to further recycling for some predefined number of steps. We hypothesized that a reinitialized neuron needs some time to grow, which was not possible in the initial setting. The following plot illustrates that immunity prevents the recycled neurons from being catched in a vicious cycle.
 
 {{< include plots_mp/_7vs3_histogram.qmd >}}
 
+Higher number of immunity rounds (i.e. number of selection phases when a newly recycled neuron can't be chosen) causes more neurons to be reinitialized at least once. Unfortunately, this eventually causes well-behaving parts of the network to be chosen for recycling. As an effect, the performance drops.
+
 {{< include plots_mp/_7vs3vsBaseline_loss.qmd >}}
 
+### Modifying reinitialization distribution
 
-## Modifying reinitialization weights distribution
-
-As we have pointed out before, magnitude and weight distribution drifts away from the initial distribution as the training progresses. However, during our initial attempts, we initialized the weights sampling from the initial distribution. To fix this issue, we decided to try out another weight sampling technique.
-A feed-forward layer consists of two matrices. Each time a neuron is reinitialized, the corresponding row and column in the matrices are filled with new (reinitialized) weights. The new technique, when replacing the weights, used the normal distribution with mean and standard deviation equal to the mean and standard deviation of all the weights in the respective matrix. This approach, like immunity, eliminated the vicious cycle. However, this process introduced a lot of noise with adverse effect on the model's loss.
-
+As we have pointed out before, magnitude and weight distribution drifts away from the initial distribution as the training progresses. However, during our initial attempts, we initialized the weights sampling from the initial distribution. To fix this issue, we decided to try out another weight sampling technique. In this approach we used the normal distribution with mean and standard deviation equal to the mean and standard deviation of all the weights in the respective matrix. This approach, like immunity, eliminated the vicious cycle problem.
 
 {{< include plots_mp/_plot_current_recycling_histogram.qmd >}}
 
+However, this process introduced a lot of noise with adverse effect on the model's loss.
+
 {{< include plots_mp/_plot_init_vs_current.qmd >}}
 
-## Copying existing neurons
+### Copying existing neurons
 At this stage of our project, we gained interest in the topic of growing neural networks. Intuitively, this problem has a similar part, in which we want to add new neurons or weights. In the case of Large Language Models, the topic is mentioned in [Gopher]. The authors describe that for their experiments, copying existing neurons was the best strategy.  We have also tried it, but without positive results.
 
 {{< include plots_jk/_copying.qmd >}}
 
-## Smooth recycling
+### Smooth recycling
 
-In an effort to explain our past problems, we pointed out the discrete nature of our technology, as opposed to the continuous landscape of training/optimizers. To change this, we have modified our strategy to gradually change the value by linear interpolation. We have noticed that this way we were able to make training loss dynamics smoother, but without beating the baseline.
+In an effort to explain our past problems, we pointed out the discrete nature of our technique, as opposed to the continuous landscape of training/optimizers. To change this, we have modified our strategy to gradually change the value by linear interpolation. We have noticed that this way we were able to make training loss dynamics smoother, but without beating the baseline.
 
 {{< include plots_jk/_smooth.qmd >}}
 
@@ -204,13 +203,13 @@ where:
 
 
 Since this idea is quite similar to weight decay, we decided not to optimize this term with Adam, but to split it from the task loss and optimize it using simple gradient descent - a similar technique is used in AdamW to incorporate weight decay loss term.
-```
+
 {{< include plots_mp/_mpl_magnitudes.qmd >}}
-```
+
 Midpoint loss achieved the goal of boosting the small neurons, however it failed to make a positive impact on the model's performance.
 
 {{< include plots_mp/_mpl_loss.qmd >}}
 
 <!---
- <wariacje nt. Plotu ze strzałkami tłumaczące różne opcje w immunity>
+ <wariacje nt. Plotu ze strzałkami tłumaczące różne opcje w immunity>. Konkluzje
 -->
