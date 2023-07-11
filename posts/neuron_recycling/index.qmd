@@ -204,7 +204,7 @@ where:
 
 Since this idea is quite similar to weight decay, we decided not to optimize this term with Adam, but to split it from the task loss and optimize it using simple gradient descent - a similar technique is used in AdamW to incorporate weight decay loss term.
 
-{{< include plots_mp/_mpl_magnitudes.qmd >}}
+{{< include plots_mp/_mpl_magnitudes.qmd >}}<!--change to start in step 25k or so-->
 <br/>
 
 Midpoint loss achieved the goal of boosting the small neurons, however it failed to make a positive impact on the model's performance.
