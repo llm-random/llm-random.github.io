@@ -237,3 +237,4 @@ Midpoint loss achieved the goal of boosting the small neurons, however it failed
 # Conclusion
 In this work, we described our attempts to integrate pruning and Lottery Ticket Hypothesis via neuron recycling. Although we were not able to beat the baseline using our technique, we explored the topic thoroughly and conducted a series of experiments, providing valuable insights into the inner workings of a transformer. We hope that our findings may be a helpful resource for future studies and investigations in this area. 
 <!-- We would also want to encourage our fellow researchers to share their negative research blah blah blah -->
+<!-- Acknowledgements -->

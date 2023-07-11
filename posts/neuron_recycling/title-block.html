@@ -1,6 +1,14 @@
 <!-- Taken from https://github.com/quarto-dev/quarto-cli/blob/a5a81f5d2afa2664f8748ac9ae5e70b4a0a2baf7/src/resources/formats/html/templates/banner/title-block.html -->
 
 <header id="title-block-header" class="quarto-title-block default$if(quarto-template-params.banner-header-class)$ $quarto-template-params.banner-header-class$$endif$">
+  <style>
+    .equal-contribution {
+    padding: 10px;
+    margin: 10px 0px;
+    font-size: small;
+    text-align: right;
+}
+  </style>
     <div class="quarto-title-banner">
       <div class="quarto-title column-body">
         $if(title)$<h1 class="title">$title$</h1>$endif$
