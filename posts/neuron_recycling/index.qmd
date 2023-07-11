@@ -1,21 +1,21 @@
 ---
 title: "Neuron Recycling"
 author:
-    -   name: Jakub Krajewski †
+    -   name: Jakub Krajewski \*
         equal-contributor: true
         affiliations:
         -   ref: ideas
         -   ref: uow
-    -   name: Maciej Pióro †
+    -   name: Maciej Pióro \*
         equal-contributor: true
         affiliations:
         -   ref: ideas
         -   ref: uow
-    -   name: Sebastian Jaszczur
+    -   name: Sebastian Jaszczur †
         affiliations:
         -   ref: ideas
         -   ref: uow
-    -   name: Marek Cygan 
+    -   name: Marek Cygan ‡
         affiliations:
         -   ref: uow
 affiliations:
@@ -23,8 +23,8 @@ affiliations:
         name: IDEAS NCBR
     -   id: uow
         name: University of Warsaw
-date: "2023-07-07"
-# date-modified: "2023-07-07"
+date: "2023-07-11"
+# date-modified: "2023-07-11" 
 categories: []
 image: "logo.png"
 format:
@@ -44,6 +44,8 @@ Sparse neural networks have garnered attention due to their theoretical promise 
 Pruning is a well-established technique used to sparsify neural networks. It relies on the fact that typically a large part of a trained neural network can be masked without impacting the accuracy of the network, albeit often requiring additional fine-tuning in order to regain some lost performance. Despite multiple works proposing various neuron-selection criteria for pruning, magnitude-based pruning remains a viable option. The Lottery Ticket Hypothesis is a major finding on the way to explain how the initialization impacts neural networks. The main point of the LTH is that through iterative pruning, performant subnetworks depending on the initialization can be found in neural networks. Those well-initialized network fragments are the namesake of LTH (the “lottery tickets”). Although some notions of the original LTH paper have been challenged, it has remained the subject of active research and a motivation for our work. <!--many citations to this part-->
 By combining the two ideas (pruning and LTH) we arrive at a new potential technique for raising neural network performance. If we are able to remove parts of the network without hurting the performance (pruning) and the fitness of a part of a network is determined at initialization, perhaps we could re-initialize the unnecessary network parts (i. e. draw more “lottery tickets”), leading to a better-performing network.
 
+<!-- Obrazek w rodzaju "LTH + Pruning + Dense Model = Recycling" -->
+
 # Preliminaries
 
 Before we move to the presentation of our experiments and findings, let's first discuss the training setup, define key terminology, and go over the basics.
@@ -51,24 +53,27 @@ Before we move to the presentation of our experiments and findings, let's first 
 ### Model and training setup
 In our project, we are focusing on the Transformer<!--[citation]-->, since it's a major architecture across different domains<!--[citation]-->. For the specific type of the model, we are working on encoder-only BERT <!--[citation]-->. Taking into consideration available computational resources and expected iteration time (we wanted to try as many options as possible), we decided to opt for the BERT Medium configuration (with $d_\text{model}=512$ and $8$ attention heads). We focus on the feed-forward layer, because it is the most computationally demanding part of commonly-used transformer models and, in large models, it contains the majority of the parameters. At the same time, the amount of research focusing on the attention mechanism is overwhelming, suggesting that the feed-forward layer is a relatively unexplored area.
 
-We trained the model for $80{,}000$ steps (around compute-optimal point), with Adam, using batch size of $256$ and learning rate of $0.001$.
+We trained the model for $80{,}000$ steps (around compute-optimal number of train samples for this size of model) <!-- może dodać więcej wytłumaczenia -->, with Adam, using batch size of $256$ and learning rate of $0.001$.
 
 <!--It has been shown citation that the initialization of the weights in neural networks is of utmost importance to the convergence of the network. In all our experiments, we initialized the linear layers using the following distribution: <latex> as per citation.-->
 
-In the following part of this post, we will often use the terms of neuron and magnitude. Below are the definitions we employ.
+In the following part of this post, we will often use the terms _neuron_ and _magnitude_. Below are the definitions we employ.
 
 * **Neuron** <br/>
-    In the Transformer, feed-forward layer consists of two linear layers, with a nonlinearity in between. The first layer maps the input vector from $d_\text{model}$ to $d_\text{ff}$ dimension, and the second one from $d_\text{ff}$ back to $d_\text{model}$. Typically, $d_\text{ff}$ is four times greater than $d_\text{model}$. By neuron, we will understand all weights interacting with a particular coordinate in the hidden, $\mathbb{R}^{d_\text{ff}}$ space. In the `torch` implementation, a neuron's weights are the parameters in a given row of the first feed-forward matrix and in the corresponding column in the second one.
+    In the Transformer, feed-forward layer consists of two linear layers, with a nonlinearity in between. The first layer maps the input vector from $d_\text{model}$ to $d_\text{ff}$ dimension, and the second one from $d_\text{ff}$ back to $d_\text{model}$. Typically, $d_\text{ff}$ is four times greater than $d_\text{model}$. By neuron, we will understand all weights interacting with a particular coordinate in the $\mathbb{R}^{d_\text{ff}}$ activation vector. In the `torch` implementation, a neuron's weights are the parameters in a given row of the first feed-forward matrix and in the corresponding column in the second one.
+<!-- tUTAJ FAJNIE BY BYŁO DODAĆ JAKIŚ RYSUNEK, KTÓRY BY TO POKAZYWAŁ -->
 
 * **Magnitude** <br/>
     To calculate magnitude of a weight, we will use its absolute value. As the magnitude of a neuron we will use value of the expression $M=\sqrt{\sum{w_{in}^2} \sum{w_{out}^2}}$. <!--citation and some explanation-->
+<!-- Dać wyjaśnienie, dlaczego używamy takiej definicji magnitude -->
 
 ### Pruning
-Pruning is a technique used to induce sparsity and decrease the parameter count in a neural network. In simple terms, it means deleting the least important neurons (structured pruning) or weights (unstructured pruning). A typical implementation realizes this by either multiplying the output of the deleted neurons by 0 or setting the weights of the neuron to 0. A widely-used proxy for the importance of a neuron or weight is its magnitude. You may find it counterintuitive, but we can even remove the whole FF Layer and the model will still work. This is because model can learn to represent the same transformation using attention.
+Pruning is a technique used to induce sparsity and decrease the parameter count in a neural network. In simple terms, it means deleting the least important neurons (structured pruning) or weights (unstructured pruning). A typical implementation realizes this by either multiplying the output of the deleted neurons by 0 or setting the weights of the neuron to 0. A widely-used proxy for the importance of a neuron or weight is its magnitude. <!-- You may find it counterintuitive, but we can even remove the whole FF Layer and the model will still work. This is because model can learn to represent the same transformation using attention. -->
+
 
 <!--improve this paragraph--> Below we present a plot with loss curves of the model gradually pruned at the FF layer, starting in step $10{,}000$, such that the layer is completely masked in the end of the training. As a comparison, we also add regular model and the one without feed-forward layer.
 
-{{< include plots_jk/_pruning_masked_b.qmd >}}
+{{< include plots_jk/_pruning_masked_b.qmd >}} 
 
 Interestingly, the effect of pruning can't be visible for a significant fraction of the training time. It's also worth noting that in the end the model without FF Layer performs slightly better than the pruned one. This is because in the first case, Attention was trained to _adjust_&nbsp; from the very beginning of the training.
 
@@ -84,15 +89,15 @@ The main goal of our work was to improve the performance of a transformer model 
 
 # Understanding neuron magnitudes
 
-One of the key inspirations for our work was structured pruning, where neuron magnitude is often chosen as the measure of significance<!--citation-->. We were interested in how this metric evolves during the training process. At first, we thought a histogram of neuron magnitudes would exhibit a normal distribution. However, our experiments showed something different. The following graph shows evolution of neuron magnitudes throughout the training process.
+One of the key inspirations for our work was structured pruning, where neuron magnitude is often chosen as the measure of significance<!--citation-->. We were interested in how this metric evolves during the training process. At first, we thought a histogram of neuron magnitudes would exhibit a normal distribution. However, our experiments showed something different. The following graph shows evolution of neuron magnitudes throughout the training process. <!-- dodać zdanie, że większość layerów wygląda jak layer 1 -->
 
 {{< include plots_jk/_magnitudes.qmd >}}
 
 <br/>
 
-In the early stages of training, it's clear to see the neurons split into two unique groups, one featuring much lower magnitudes than the other. This finding opens up a multitude of discussion topics. It can be speculated that the neurons belonging to the group with smaller magnitudes potentially don't hold much importance. There's an option to consider eliminating them. However, it's also possible that these minor neurons, though activated seldom, play a critical role in specific tasks.
+In the early stages of training, the neurons split into two groups, one featuring much lower magnitudes than the other. This finding opens up a multitude of discussion topics. It can be speculated that the neurons belonging to the group with smaller magnitudes potentially don't hold much importance and can be pruned freely. However, it's also possible that these neurons, though small, play a critical role in specific tasks.
 
-Notably, we noticed that this discrepancy does not happen in the last layers of the network. As an example, below you can examine magnitudes for neurons in the 8th FF layer of the network.
+This phenomenon is not limited to the first layer of the network. We have observed it in all layers, apart from the last one, as shown in the following plot.
 
 {{< include plots_jk/_layer8.qmd >}}
 
@@ -106,23 +111,27 @@ Notably, we noticed that this discrepancy does not happen in the last layers of 
 
 <!--improve-->We can see that the group of "weaker" neurons has moved to the right after performing additional training of the FF part. However, neurons still form two distinct groups: overtraining the whole layer is not enough for the weaker ones to catch up. In the next experiment, we have examined the scenario of retraining only small magnitude neurons, only large magnitude neurons and random subsets. How does it affect the performance? The results are depicted on the following plot.
 
+<!-- dać plot z magnitudami dla wszystkich wersji overtrainingu -->
+
 {{< include plots_jk/_overtrain_loss.qmd >}}
 
 <!--improve-->Overtraining only the smallest neurons yields the best results when compared to reinforcing high-magnitude ones. Notably, overtraining the small ones gives similar gains in performance to working on the entire layer! Contrarily, ampifying the highest ones gives gains similar to no overtraining at all. This provides a compelling argument in favor of our technique. <!--explain why-->
 
- So far, we have performed a series of experiments on relatively small architectures. We were curious to see how our observations would translate to well-established, large-scale foundation models like BERT Large or T5.
+## Magnitudes in openly available pretrained models
+<!-- uniknąć "small architectures", napisać, że chcemy się porównać z dużymi, dostępnymi gdzieś modelami -->
+So far, we have performed a series of experiments on relatively small architectures. We were curious to see how our observations would translate to well-established, large-scale foundation models like BERT Large or T5.
 
 {{< include plots_mp/_bert_ff12.qmd >}}
 {{< include plots_mp/_t5_ff5.qmd >}}
 
-There is a clear difference between the plots above. Magnitudes in T5 seem similar to those in our smaller models, while BERT presents a more balanced distribution. What could account for these variations? We discovered that the use of weight decay plays a significant role. This simple but widely used technique has an important impact on the distribution. <!--explain more-->
+There is a clear difference between the plots above. Magnitudes in T5 seem similar to those in our smaller models, while BERT presents a more balanced distribution. What could account for these variations? We discovered that the use of weight decay in BERT Large plays a significant role. This simple but widely used technique has an important impact on the distribution. <!--explain more-->
 
 These findings support the idea of exploring neuron recycling and offer a good foundation for further experiments. In the next sections, we will present results on this topic and share our insights.
 
 
 # Recycling
-
-The central part of our work was a method we called neuron recycling. The whole process boils down to three phases, repeated periodically: training, selection and reinitialization.
+<!-- ujednolicić czas jakiego używamy (is / was / will) -->
+The central part of our work was a method we called neuron recycling. The consists of three phases, repeated periodically: training, selection and reinitialization.
 
 ![](diagram.png){width=60% fig-align="center"}
 
@@ -136,9 +145,10 @@ Although this procedure is conceptually simple, it allows for many degrees of fr
 * The percentage of recycled neurons
 * Selection / reinitialization strategies
 
-After examining the pruning literature, <!--[citations]-->we have found that the simple magnitude-based approach works best in most cases <plot pruning>. It is also easy to implement and computationally efficient. This approach is also grounded on our experiments. Below we present the training curves for the model pruned gradually using different criterions: high/low magnitude and random neurons.
+After examining the pruning literature, <!--[citations]-->we have found that the simple magnitude-based approach works best in most cases <plot pruning>. It is also easy to implement and computationally efficient. This approach is also grounded in our experiments. Below we present the training curves for the model pruned gradually using different criterions: high/low magnitude and random neurons.
 
 {{< include plots_jk/_pruning.qmd >}}
+<!-- spróbować dać drugą oś OX - z procentami wyprunowacyh neuiornów -->
 
 <!--more comment on this-->As you can see, removing low magnitude neurons hurts the model the least, and removing high magnitude ones cases the largest loss. This is a good argument that this criterion correlates well with neuron significance.
 
@@ -177,13 +187,18 @@ However, this process introduced a lot of noise with adverse effect on the model
 {{< include plots_mp/_plot_init_vs_current.qmd >}}
 
 ### Copying existing neurons
-At this stage of our project, we gained interest in the topic of growing neural networks. Intuitively, this problem has a similar part, in which we want to add new neurons or weights. In the case of Large Language Models, the topic is mentioned in the Gopher <!--citation-->paper. The authors describe that for their experiments, copying existing neurons was the best strategy. We have also tried it, but without positive results.
+<!-- At this stage of our project, we gained interest in the topic of growing neural networks. Intuitively, this problem has a similar part, in which we want to add new neurons or weights. In the case of Large Language Models, the topic is mentioned in the Gopher paper. The authors describe that for their experiments, copying existing neurons was the best strategy. We have also tried it, but without positive results. -->
+
+Inspired by the Gopher paper, we have also tried to copy existing neurons while adding some noise to their weights. This approach was also unsuccessful.
+
+<!-- przepisać to lepiej -->
 
 {{< include plots_jk/_copying.qmd >}}
 
 ### Smooth recycling
 
-In an effort to explain our past problems, we pointed out the discrete nature of our technique, as opposed to the continuous landscape of training/optimizers. To change this, we have modified our strategy to gradually change the value by linear interpolation. <!--add latex-->We have noticed that this way we were able to make training loss dynamics smoother, but without beating the baseline.
+In an effort to explain our past problems, we pointed out the discrete nature of our technique, as opposed to the continuous landscape of training/optimizers. To change this, we have modified our strategy to gradually change the value by linear interpolation. <!--add latex--> We have noticed that this way we were able to make training loss dynamics smoother, but without beating the baseline.
+<!-- wyjaśnić na czym polega linear interpolation -->
 
 {{< include plots_jk/_smooth.qmd >}}
 
@@ -196,26 +211,29 @@ The idea was to introduce an additional loss term that would encourage neuron gr
 $$ Loss = \sum_{l = 1}^{L} \sum_{n = 1}^{d_\text{ff}} dist(M_{l,n}, stop\_grad(avg(M_{l,*})))$$
 where:
 
-* $M_{l,n}$ - magnitude of th $n^{\text{th}}$ neuron in the $l^{\text{th}}$ layer. In some experiments we used the $log$ of the magnitude.
-* $dist$ - distance function, typically $l_1$, $l_2$.
-* $avg$ - arithmetic mean. In some experiments, median was used instead due to its robustness to outliers.
 * $L$ - number of layers.
-* $d_\text{ff}$ - number of neurons in a layer. In some experiments, we only summed over neurons with magnitude below the average magnitude of the layer, to encourage growth of small neurons.
-* $stop\_grad$ - stops the gradient from flowing through. Without stopping the gradient, the loss gradient computation becomes untractable.
+* $d_\text{ff}$ - number of neurons in a layer. In some experiments, we only summed over neurons with magnitude below the average magnitude of the layer, to encourage growth of small neurons, without thwarting the growth of the large ones.
+* $dist$ - distance function, typically $l_1$ or $l_2$.
+* $M_{l,n}$ - magnitude of th $n^{\text{th}}$ neuron in the $l^{\text{th}}$ layer. In some experiments we used the $log$ of the magnitude.
+* $stop\_grad$ - stops the gradient from flowing through.
+* $avg$ - arithmetic mean. In some experiments, median was used instead due to its robustness to outliers.
 
 
 Since this idea is quite similar to weight decay, we decided not to optimize this term with Adam, but to split it from the task loss and optimize it using simple gradient descent - a similar technique is used in AdamW to incorporate weight decay loss term.
 
-{{< include plots_mp/_mpl_magnitudes.qmd >}}<!--change to start in step 25k or so-->
+{{< include plots_mp/_mpl_magnitudes.qmd >}}
 <br/>
 
 Midpoint loss achieved the goal of boosting the small neurons, however it failed to make a positive impact on the model's performance.
 
 {{< include plots_mp/_mpl_loss.qmd >}}
 
+<!-- dodać baseline do obu wykresów -->
+
 <!---
  <wariacje nt. Plotu ze strzałkami tłumaczące różne opcje w immunity>
 -->
 
 # Conclusion
-In this work, we described our attempts to integrate pruning and Lottery Ticket Hypothesis via neuron recycling. Although we were not able to beat the baseline using our technique, we explored the topic and conducted a series of experiments. We hope that our findings may be a helpful resource for future studies and investigations in this area.
+In this work, we described our attempts to integrate pruning and Lottery Ticket Hypothesis via neuron recycling. Although we were not able to beat the baseline using our technique, we explored the topic thoroughly and conducted a series of experiments, providing valuable insights into the inner workings of a transformer. We hope that our findings may be a helpful resource for future studies and investigations in this area. 
+<!-- We would also want to encourage our fellow researchers to share their negative research blah blah blah -->
