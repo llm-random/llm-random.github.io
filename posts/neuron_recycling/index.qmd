@@ -15,7 +15,7 @@ author:
         affiliations:
         -   ref: ideas
         -   ref: uow
-    -   name: Marek Cygan 
+    -   name: Marek Cygan
         affiliations:
         -   ref: uow
 affiliations:
@@ -31,7 +31,7 @@ format:
   html:
     template-partials:
     - title-block.html
-    include-in-header:  
+    include-in-header:
       - text: |
           <script charset="utf-8" src="https://cdn.plot.ly/plotly-2.20.0.min.js"/>
 ---
