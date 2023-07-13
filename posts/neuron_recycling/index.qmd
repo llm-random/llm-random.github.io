@@ -24,14 +24,14 @@ affiliations:
     -   id: uow
         name: University of Warsaw
 date: "2023-07-11"
-# date-modified: "2023-07-11" 
+# date-modified: "2023-07-11"
 categories: []
-image: "logo.png"
+image: "logo1.png"
 format:
   html:
     template-partials:
     - title-block.html
-    include-in-header:  
+    include-in-header:
       - text: |
           <script charset="utf-8" src="https://cdn.plot.ly/plotly-2.20.0.min.js"/>
 ---
@@ -73,7 +73,7 @@ Pruning is a technique used to induce sparsity and decrease the parameter count 
 
 <!--improve this paragraph--> Below we present a plot with loss curves of the model gradually pruned at the FF layer, starting in step $10{,}000$, such that the layer is completely masked in the end of the training. As a comparison, we also add regular model and the one without feed-forward layer.
 
-{{< include plots_jk/_pruning_masked_b.qmd >}} 
+{{< include plots_jk/_pruning_masked_b.qmd >}}
 
 Interestingly, the effect of pruning can't be visible for a significant fraction of the training time. It's also worth noting that in the end the model without FF Layer performs slightly better than the pruned one. This is because in the first case, Attention was trained to _adjust_&nbsp; from the very beginning of the training.
 
@@ -197,25 +197,34 @@ Inspired by the Gopher paper, we have also tried to copy existing neurons while 
 
 ### Smooth recycling
 
-In an effort to explain our past problems, we pointed out the discrete nature of our technique, as opposed to the continuous landscape of training/optimizers. To change this, we have modified our strategy to gradually change the value by linear interpolation. <!--add latex--> We have noticed that this way we were able to make training loss dynamics smoother, but without beating the baseline.
-<!-- wyjaśnić na czym polega linear interpolation -->
+In an effort to explain our past problems, we pointed out the discrete nature of our technique, as opposed to the continuous landscape of training/optimizers. To change this, we have modified our strategy to gradually change the value by linear interpolation. More precisely, new value assigned for a recycled weight was
+$$ x = \alpha \ x_{new} + (1-\alpha) \ stop\_grad(x_{old}),$$
+where:
+
+* $x_{old}$ - old value of the weight before recycling
+* $x_{new}$ - new value chosen for the weight
+* $\alpha$ - non-trainable parameter, changed linearly from 0 to 1 in the steps following reinitialization <!--dodać info o n kroków-->
+* $stop\_grad$ - stops the gradient from flowing through.
+
+We have noticed that this way we were able to make training loss dynamics smoother, but without beating the baseline.
+<!-- wyjaśnić na czym polega linear interpolation i dodać legendę do wykresu-->
 
 {{< include plots_jk/_smooth.qmd >}}
 
 # Tangent - Midpoint Loss
 
 While working towards the main goal of the project, we started investigating the distribution of neuron magnitudes during the training. We noticed that the magnitude distribution is quite uneven - a large percentage of neurons remains small, and the distribution is right-skewed.
-Since the goal of our project was to reduce the number of low-quality, i.e., small neurons, we came up with a pretty risky solution: Midpoint Loss.
+Since the goal of our project was to reduce the number of low-quality, i.e., small neurons, we came up with a pretty risky solution<!--explain why risky-->: Midpoint Loss.
 The idea was to introduce an additional loss term that would encourage neuron growth and "even-ness" of the magnitude distribution. The general equation for the midpoint loss is:<!--comment the latex-->
 
-$$ Loss = \sum_{l = 1}^{L} \sum_{n = 1}^{d_\text{ff}} dist(M_{l,n}, stop\_grad(avg(M_{l,*})))$$
+$$ Loss = \sum_{l = 1}^{L} \sum_{n = 1}^{d_\text{ff}} dist(M_{l,n}, stop\_grad(avg_n(M_{l,n})))$$
 where:
 
-* $L$ - number of layers.
-* $d_\text{ff}$ - number of neurons in a layer. In some experiments, we only summed over neurons with magnitude below the average magnitude of the layer, to encourage growth of small neurons, without thwarting the growth of the large ones.
-* $dist$ - distance function, typically $l_1$ or $l_2$.
-* $M_{l,n}$ - magnitude of th $n^{\text{th}}$ neuron in the $l^{\text{th}}$ layer. In some experiments we used the $log$ of the magnitude.
-* $stop\_grad$ - stops the gradient from flowing through.
+* $L$ - number of layers
+* $d_\text{ff}$ - number of neurons in a layer. In some experiments, we only summed over neurons with magnitude below the average magnitude of the layer, to encourage growth of small neurons, without thwarting the growth of the large ones
+* $dist$ - distance function, typically $l_1$ or $l_2$
+* $M_{l,n}$ - magnitude of th $n^{\text{th}}$ neuron in the $l^{\text{th}}$ layer. In some experiments we used the $log$ of the magnitude
+* $stop\_grad$ - stops the gradient from flowing through
 * $avg$ - arithmetic mean. In some experiments, median was used instead due to its robustness to outliers.
 
 
@@ -235,6 +244,6 @@ Midpoint loss achieved the goal of boosting the small neurons, however it failed
 -->
 
 # Conclusion
-In this work, we described our attempts to integrate pruning and Lottery Ticket Hypothesis via neuron recycling. Although we were not able to beat the baseline using our technique, we explored the topic thoroughly and conducted a series of experiments, providing valuable insights into the inner workings of a transformer. We hope that our findings may be a helpful resource for future studies and investigations in this area. 
+In this work, we described our attempts to integrate pruning and Lottery Ticket Hypothesis via neuron recycling. Although we were not able to beat the baseline using our technique, we explored the topic thoroughly and conducted a series of experiments, providing valuable insights into the inner workings of a transformer. We hope that our findings may be a helpful resource for future studies and investigations in this area.
 <!-- We would also want to encourage our fellow researchers to share their negative research blah blah blah -->
 <!-- Acknowledgements -->
