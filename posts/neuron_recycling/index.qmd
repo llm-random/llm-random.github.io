@@ -28,7 +28,7 @@ bibliography: bibliography.bib
 csl: apa.csl
 # date-modified: "2023-07-11"
 categories: []
-image: "logo1.png"
+image: "logo.png"
 format:
   html:
     template-partials:
