@@ -24,6 +24,8 @@ affiliations:
     -   id: uow
         name: University of Warsaw
 date: "2023-07-11"
+bibliography: bibliography.bib
+csl: apa.csl
 # date-modified: "2023-07-11"
 categories: []
 image: "logo1.png"
@@ -41,7 +43,8 @@ Sparse neural networks have garnered attention due to their theoretical promise 
 
 # Introduction
 
-Pruning is a well-established technique used to sparsify neural networks. It relies on the fact that typically a large part of a trained neural network can be masked without impacting the accuracy of the network, albeit often requiring additional fine-tuning in order to regain some lost performance. Despite multiple works proposing various neuron-selection criteria for pruning, magnitude-based pruning remains a viable option. The Lottery Ticket Hypothesis is a major finding on the way to explain how the initialization impacts neural networks. The main point of the LTH is that through iterative pruning, performant subnetworks depending on the initialization can be found in neural networks. Those well-initialized network fragments are the namesake of LTH (the “lottery tickets”). Although some notions of the original LTH paper have been challenged, it has remained the subject of active research and a motivation for our work. <!--many citations to this part-->
+Pruning is a well-established technique used to sparsify neural networks [@NIPS1989_6c9882bb; @NIPS2015_ae0eb3ee]. It relies on the fact that typically a large part of a trained neural network can be masked without impacting the accuracy of the network, albeit often requiring additional fine-tuning in order to regain some lost performance. Despite multiple works proposing various neuron-selection criteria for pruning, magnitude-based pruning remains a viable option. The Lottery Ticket Hypothesis [@frankle2019lottery] is a major finding on the way to explain how the initialization impacts neural networks. The main point of the LTH is that through iterative pruning, performant subnetworks depending on the initialization can be found in neural networks. Those well-initialized network fragments are the namesake of LTH (the “lottery tickets”). Although some notions of the original LTH paper have been challenged [@pmlr-v119-frankle20a], it has remained the subject of active research and a motivation for our work. <!--many citations to this part-->
+
 By combining the two ideas (pruning and LTH) we arrive at a new potential technique for raising neural network performance. If we are able to remove parts of the network without hurting the performance (pruning) and the fitness of a part of a network is determined at initialization, perhaps we could re-initialize the unnecessary network parts (i. e. draw more “lottery tickets”), leading to a better-performing network.
 
 <!-- Obrazek w rodzaju "LTH + Pruning + Dense Model = Recycling" -->
@@ -51,7 +54,7 @@ By combining the two ideas (pruning and LTH) we arrive at a new potential techni
 Before we move to the presentation of our experiments and findings, let's first discuss the training setup, define key terminology, and go over the basics.
 
 ### Model and training setup
-In our project, we are focusing on the Transformer<!--[citation]-->, since it's a major architecture across different domains<!--[citation]-->. For the specific type of the model, we are working on encoder-only BERT <!--[citation]-->. Taking into consideration available computational resources and expected iteration time (we wanted to try as many options as possible), we decided to opt for the BERT Medium configuration (with $d_\text{model}=512$ and $8$ attention heads). We focus on the feed-forward layer, because it is the most computationally demanding part of commonly-used transformer models and, in large models, it contains the majority of the parameters. At the same time, the amount of research focusing on the attention mechanism is overwhelming, suggesting that the feed-forward layer is a relatively unexplored area.
+In our project, we are focusing on the Transformer [@transformer], since it's a major architecture across different domains [@touvron2023llama; @dosovitskiy2021image]. For the specific type of the model, we are working on encoder-only BERT [@devlin2019bert]. Taking into consideration available computational resources and expected iteration time (we wanted to try as many options as possible), we decided to opt for the BERT Medium configuration (with $d_\text{model}=512$ and $8$ attention heads). We focus on the feed-forward layer, because it is the most computationally demanding part of commonly-used transformer models and, in large models, it contains the majority of the parameters. At the same time, the amount of research focusing on the attention mechanism is overwhelming, suggesting that the feed-forward layer is a relatively unexplored area.
 
 We trained the model for $80{,}000$ steps (around compute-optimal number of train samples for this size of model) <!-- może dodać więcej wytłumaczenia -->, with Adam, using batch size of $256$ and learning rate of $0.001$.
 
@@ -89,7 +92,7 @@ The main goal of our work was to improve the performance of a transformer model 
 
 # Understanding neuron magnitudes
 
-One of the key inspirations for our work was structured pruning, where neuron magnitude is often chosen as the measure of significance<!--citation-->. We were interested in how this metric evolves during the training process. At first, we thought a histogram of neuron magnitudes would exhibit a normal distribution. However, our experiments showed something different. The following graph shows evolution of neuron magnitudes throughout the training process. <!-- dodać zdanie, że większość layerów wygląda jak layer 1 -->
+One of the key inspirations for our work was structured pruning, where neuron/filter magnitude is often chosen as the measure of significance<!--citation-->. We were interested in how this metric evolves during the training process. At first, we thought a histogram of neuron magnitudes would exhibit a normal distribution. However, our experiments showed something different. The following graph shows evolution of neuron magnitudes throughout the training process. <!-- dodać zdanie, że większość layerów wygląda jak layer 1 -->
 
 {{< include plots_jk/_magnitudes.qmd >}}
 
@@ -131,7 +134,7 @@ These findings support the idea of exploring neuron recycling and offer a good f
 
 # Recycling
 <!-- ujednolicić czas jakiego używamy (is / was / will) -->
-The central part of our work was a method we called neuron recycling. The consists of three phases, repeated periodically: training, selection and reinitialization.
+The central part of our work was a method we called neuron recycling. The process consists of three phases, repeated periodically: training, selection and reinitialization.
 
 ![](diagram.png){width=60% fig-align="center"}
 
@@ -162,7 +165,7 @@ As a sanity check, we have examined the histogram presenting the number of times
 
 {{< include plots_mp/_vs_histogram.qmd >}}
 
-As we have seen <!--link do distr throughout training-->, on average magnitude of neurons grows throughout the training. Therefore, sampling from the initial distribution will cause the reycycled neurons to have even lower magnitudes. As an effect, they are unable to catch up to before another selection phase. Thus, the recycled neurons are caught up in a vicious cycle in which they are always recycled before achieving high magnitude.
+As we have seen<!--link do distr throughout training-->, on average magnitude of neurons grows throughout the training. Therefore, sampling from the initial distribution will cause the reycycled neurons to have even lower magnitudes. As an effect, they are unable to catch up to before another selection phase. Thus, the recycled neurons are caught up in a _vicious cycle_ in which they are always recycled before achieving high magnitude.
 
 <!--spróbować zrobić diagram z `vicious cycle`-->
 
@@ -176,9 +179,9 @@ Higher number of immunity rounds (i.e. number of selection phases when a newly r
 
 {{< include plots_mp/_7vs3vsBaseline_loss.qmd >}}
 
-### Modifying reinitialization distribution
+### Modifying reinitialization distribution {#sec-distr}
 
-As we have pointed out before, magnitude and weight distribution drifts away from the initial distribution as the training progresses. However, during our initial attempts, we initialized the weights sampling from the initial distribution. To fix this issue, we decided to try out another weight sampling technique. In this approach we used the normal distribution with mean and standard deviation equal to the mean and standard deviation of all the weights in the respective matrix. This approach, like immunity, eliminated the vicious cycle problem.
+As we have pointed out before, magnitude and weight distribution drifts away from the initial distribution as the training progresses. However, during our initial attempts, we initialized the weights sampling from the initial distribution. To fix this issue, we decided to try out another weight sampling technique. In this approach we used the normal distribution with mean and standard deviation equal to the mean and standard deviation of all the weights in the respective matrix. This approach, like immunity, eliminated the _vicious cycle _ problem.
 
 {{< include plots_mp/_plot_current_recycling_histogram.qmd >}}
 
@@ -197,16 +200,15 @@ Inspired by the Gopher paper, we have also tried to copy existing neurons while 
 
 ### Smooth recycling
 
-In an effort to explain our past problems, we pointed out the discrete nature of our technique, as opposed to the continuous landscape of training/optimizers. To change this, we have modified our strategy to gradually change the value by linear interpolation. More precisely, new value assigned for a recycled weight was
-$$ x = \alpha \ x_{new} + (1-\alpha) \ stop\_grad(x_{old}),$$
+We came up with the hypothesis that neuron recycling could actually work better if it didn't have sudden and discrete changes in neuron values. These sharp changes plausibly destabilize the training process. This issue is clear in sudden loss spikes, such as those observed in the [recycling with modified distribution](#sec-distr) part. It may be particularly problematic that the statistics of the optimizer need to adjust to the new values, but they don't have time to do that. To make the recycling process _smoother_, we modified our strategy to linearly interpolate between the old weights of the neuron and the their target values. More precisely, the new value assigned for a recycled weight was
+$$ x = \alpha \ x_{target} + (1-\alpha) \ x_{old},$$
 where:
 
-* $x_{old}$ - old value of the weight before recycling
-* $x_{new}$ - new value chosen for the weight
-* $\alpha$ - non-trainable parameter, changed linearly from 0 to 1 in the steps following reinitialization <!--dodać info o n kroków-->
-* $stop\_grad$ - stops the gradient from flowing through.
+* $x_{target}$ - target value chosen for the weight; this parameter is trainable right away
+* $x_{old}$ - old value of the weight before recycling; this value is no longer trainable
+* $\alpha$ - non-trainable parameter, changed linearly from 0 to 1 over 1000 steps following the selection phase.
 
-We have noticed that this way we were able to make training loss dynamics smoother, but without beating the baseline.
+With this modification, we saw that the training loss became smoother. However, the solution was still not able to beat the baseline.
 <!-- wyjaśnić na czym polega linear interpolation i dodać legendę do wykresu-->
 
 {{< include plots_jk/_smooth.qmd >}}
@@ -215,17 +217,18 @@ We have noticed that this way we were able to make training loss dynamics smooth
 
 While working towards the main goal of the project, we started investigating the distribution of neuron magnitudes during the training. We noticed that the magnitude distribution is quite uneven - a large percentage of neurons remains small, and the distribution is right-skewed.
 Since the goal of our project was to reduce the number of low-quality, i.e., small neurons, we came up with a pretty risky solution<!--explain why risky-->: Midpoint Loss.
-The idea was to introduce an additional loss term that would encourage neuron growth and "even-ness" of the magnitude distribution. The general equation for the midpoint loss is:<!--comment the latex-->
+The idea was to introduce an additional loss term that would encourage neuron growth and "even-ness" of the magnitude distribution. The general equation for the midpoint loss is<!--comment the latex + was or is?-->
 
-$$ Loss = \sum_{l = 1}^{L} \sum_{n = 1}^{d_\text{ff}} dist(M_{l,n}, stop\_grad(avg_n(M_{l,n})))$$
+$$ Loss = \sum_{l = 1}^{L} \sum_{n = 1}^{d_\text{ff}} \ d\left( M_{l,n}, \ sg\left(\bar{M}_{l}\right) \right)$$
 where:
 
-* $L$ - number of layers
-* $d_\text{ff}$ - number of neurons in a layer. In some experiments, we only summed over neurons with magnitude below the average magnitude of the layer, to encourage growth of small neurons, without thwarting the growth of the large ones
-* $dist$ - distance function, typically $l_1$ or $l_2$
 * $M_{l,n}$ - magnitude of th $n^{\text{th}}$ neuron in the $l^{\text{th}}$ layer. In some experiments we used the $log$ of the magnitude
-* $stop\_grad$ - stops the gradient from flowing through
-* $avg$ - arithmetic mean. In some experiments, median was used instead due to its robustness to outliers.
+* $\bar{M}_{l}$ - average neuron magnitude in layer $l$, typically calculated as arithmetic mean. In some experiments, median was used instead due to its robustness to outliers
+* $sg$ - stops the gradient from flowing through
+* $d$ - distance function, typically $l_1$ or $l_2$
+* $d_\text{ff}$ - number of neurons in a layer. In some experiments, we only summed over neurons with magnitude below the average magnitude of the layer, to encourage growth of small neurons, without thwarting the growth of the large ones
+* $L$ - number of layers.
+
 
 
 Since this idea is quite similar to weight decay, we decided not to optimize this term with Adam, but to split it from the task loss and optimize it using simple gradient descent - a similar technique is used in AdamW to incorporate weight decay loss term.
@@ -246,4 +249,10 @@ Midpoint loss achieved the goal of boosting the small neurons, however it failed
 # Conclusion
 In this work, we described our attempts to integrate pruning and Lottery Ticket Hypothesis via neuron recycling. Although we were not able to beat the baseline using our technique, we explored the topic thoroughly and conducted a series of experiments, providing valuable insights into the inner workings of a transformer. We hope that our findings may be a helpful resource for future studies and investigations in this area.
 <!-- We would also want to encourage our fellow researchers to share their negative research blah blah blah -->
+<!-- cite as... -->
 <!-- Acknowledgements -->
+
+# References
+
+::: {#refs}
+:::
