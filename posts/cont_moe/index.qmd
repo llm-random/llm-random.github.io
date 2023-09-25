@@ -1,0 +1,25 @@
+# Introduction (Abstract) SA
+# Motivation SA
+## MoE SA
+Why MoE is cool. Why MoE is hard.
+## Limitations of Current Approaches (sekcja 8.2 w paperze) SA
+Without mentioning papers 
+- obecne podejścia są niestabilne
+- mamy idealny balancing token -> expert
+
+# Related Work MP
+Actual papers
+# Method 
+- Diagram SJ
+- Implementation details MK
+- encoder vs decoder MP
+# Experiments MP / SA
+ContMoE vs dense vs expert choice (GPT-BERT mini)
+Each run was optimized for that many batches of given size
+Contmoe is better than dense 
+# Future work (zaraz będzie, pracujemy) (Wymyślić na ten paragraf inną nazwę) MK
+- wygaszanie temperatury
+- większe modele
+- BERT (oczywiście, że będzie działać)
+# Conclusions SJ
+Jesteśmy optymistyczni, będzie paper, contact us 
