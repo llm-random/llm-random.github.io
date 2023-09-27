@@ -1,25 +1,115 @@
+---
+title: "Continuous Mixture-of-Experts"
+author:
+    -   name: Szymon Antoniak \*
+        equal-contributor: true
+        affiliations:
+        -   ref: ideas
+        -   ref: uow
+    -   name: Michał Krutul
+        equal-contributor: true
+        affiliations:
+        -   ref: ideas
+        -   ref: uow
+    -   name: Maciej Pióro
+        equal-contributor: true
+        affiliations:
+        -   ref: ideas
+        -   ref: uow
+    -   name: Jakub Krajewski
+        equal-contributor: true
+        affiliations:
+        -   ref: ideas
+        -   ref: uow
+    -   name: Jan Ludziejewski
+        equal-contributor: true
+        affiliations:
+        -   ref: ideas
+        -   ref: uow
+    -   name: Tomasz Odrzygóźdź
+        affiliations:
+        -   ref: ideas
+        -   ref: uow
+    -   name: Marek Cygan ‡
+        affiliations:
+        -   ref: uow
+        -   ref: nomagic
+    -   name: Sebastian Jaszczur †
+        affiliations:
+        -   ref: ideas
+        -   ref: uow
+affiliations:
+    -   id: ideas
+        name: IDEAS NCBR
+    -   id: uow
+        name: University of Warsaw
+    -   id: nomagic
+        name: Nomagic
+date: "2023-09-29"
+bibliography: bibliography.bib
+# csl: apa.csl
+# date-modified: "2023-09-29"
+categories: []
+image: "logo.png"
+format:
+  html:
+    template-partials:
+    - title-block.html
+    include-in-header:
+      - text: |
+          <script charset="utf-8" src="https://cdn.plot.ly/plotly-2.20.0.min.js"/>
+---
+
 # Introduction (Abstract) SA
+
+
+
+aaa
+
+
 # Motivation SA
 ## MoE SA
 Why MoE is cool. Why MoE is hard.
+
 ## Limitations of Current Approaches (sekcja 8.2 w paperze) SA
 Without mentioning papers 
 - obecne podejścia są niestabilne
 - mamy idealny balancing token -> expert
 
 # Related Work MP
-Actual papers
+<!-- Co tu? Softmoe, Mixowanie ekspertów, Expert choice? I co jeszcze tutaj -->
+In recent years, there has been a growing interest in methods of increasing the number of parameters in neural networks while maintaining their computational demands. A major advance in eliminating problems with traditional MoE approaches is Expert Choice (here biblio). Our work has been inspired by their approach - Continuous MoE can be seen as an Expert Choice (as opposed to *Token Choice*) kind of method.
+Yadda, yadda yadda.
+
+There is also concurrent work investigating ideas similar to ours in the vision domain and in the setting of encoder-only models (biblio -> softmoe).
+
+
 # Method 
 - Diagram SJ
 - Implementation details MK
 - encoder vs decoder MP
+
+## Encoder vs Decoder
+In encoder-only models, each token may attend to the whole input sequence, whereas decoder-only models only allow attending to the tokens that came before a particular token to simulate the autoregressive decoding used during model inference. This is crucial for the training of decoder-only models, as allowing a token to attend to future tokens would constitute a data leak, preventing successful training.
+A major problem potentially facing any token-mixing strategy is the possibility of a data leak, making the strategy inappropriate for use with decoder-only models. In Continuous-MoE, the tokens are mixed across batch, i.e. with other tokens at the same position in other samples in the same training batch. We don't consider other strategies which would be more suitable in the context of encoders.
+
+
 # Experiments MP / SA
+## Experimental setup
+In our experiments we train the models for $250{,}000$ steps using a cosine LR scheduler with $2500$ steps of warmup, and final LR equal to $0.1$ of the peak LR. The context length is $256$ tokens and the batch size is $256$.
+We tune the max LR separately for each model.
+
+## Co tam dalej
 ContMoE vs dense vs expert choice (GPT-BERT mini)
 Each run was optimized for that many batches of given size
-Contmoe is better than dense 
+Contmoe is better than dense
+
+
 # Future work (zaraz będzie, pracujemy) (Wymyślić na ten paragraf inną nazwę) MK
 - wygaszanie temperatury
 - większe modele
 - BERT (oczywiście, że będzie działać)
+
+
 # Conclusions SJ
-Jesteśmy optymistyczni, będzie paper, contact us 
+We have shown the preliminary results showing the promise of continuous Mixture of Experts improving both the stability of training and final performance of the model. More thorough experiments are underway at the moment and we will release the paper with more results in the coming weeks. In the meantime, you can contact us with any feedback you have at llm.random.team@gmail.com .

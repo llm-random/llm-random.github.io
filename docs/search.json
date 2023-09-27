@@ -18,6 +18,83 @@
     "href": "index.html",
     "title": "llm-random",
     "section": "",
-    "text": "Neuron Recycling\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nJul 11, 2023\n\n\nJakub Krajewski *, Maciej Pióro *, Sebastian Jaszczur †, Marek Cygan ‡\n\n\n\n\n\n\nNo matching items"
+    "text": "Continuous Mixture-of-Experts\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nSep 29, 2023\n\n\nSzymon Antoniak *, Michał Krutul, Maciej Pióro, Jakub Krajewski, Jan Ludziejewski, Tomasz Odrzygóźdź, Marek Cygan ‡, Sebastian Jaszczur †\n\n\n\n\n\n\n  \n\n\n\n\nNeuron Recycling\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nJul 11, 2023\n\n\nJakub Krajewski *, Maciej Pióro *, Sebastian Jaszczur †, Marek Cygan ‡\n\n\n\n\n\n\nNo matching items"
+  },
+  {
+    "objectID": "get-started.html",
+    "href": "get-started.html",
+    "title": "llm-random.github.io",
+    "section": "",
+    "text": "Install quarto: https://quarto.org/docs/get-started/\nVoilà\n\n\n\n\n\n$ quarto preview\n\n\n\n\n\n$ quarto render\n$ git commit -m \"Add new post\"\n$ git push"
+  },
+  {
+    "objectID": "get-started.html#setup",
+    "href": "get-started.html#setup",
+    "title": "llm-random.github.io",
+    "section": "",
+    "text": "Install quarto: https://quarto.org/docs/get-started/\nVoilà"
+  },
+  {
+    "objectID": "get-started.html#run-locally-hot-reload",
+    "href": "get-started.html#run-locally-hot-reload",
+    "title": "llm-random.github.io",
+    "section": "",
+    "text": "$ quarto preview"
+  },
+  {
+    "objectID": "get-started.html#deployment",
+    "href": "get-started.html#deployment",
+    "title": "llm-random.github.io",
+    "section": "",
+    "text": "$ quarto render\n$ git commit -m \"Add new post\"\n$ git push"
+  },
+  {
+    "objectID": "posts/cont_moe/index.html#moe-sa",
+    "href": "posts/cont_moe/index.html#moe-sa",
+    "title": "Continuous Mixture-of-Experts",
+    "section": "MoE SA",
+    "text": "MoE SA\nWhy MoE is cool. Why MoE is hard."
+  },
+  {
+    "objectID": "posts/cont_moe/index.html#limitations-of-current-approaches-sekcja-8.2-w-paperze-sa",
+    "href": "posts/cont_moe/index.html#limitations-of-current-approaches-sekcja-8.2-w-paperze-sa",
+    "title": "Continuous Mixture-of-Experts",
+    "section": "Limitations of Current Approaches (sekcja 8.2 w paperze) SA",
+    "text": "Limitations of Current Approaches (sekcja 8.2 w paperze) SA\nWithout mentioning papers - obecne podejścia są niestabilne - mamy idealny balancing token -&gt; expert"
+  },
+  {
+    "objectID": "posts/cont_moe/index.html#encoder-vs-decoder",
+    "href": "posts/cont_moe/index.html#encoder-vs-decoder",
+    "title": "Continuous Mixture-of-Experts",
+    "section": "Encoder vs Decoder",
+    "text": "Encoder vs Decoder\nIn encoder-only models, each token may attend to the whole input sequence, whereas decoder-only models only allow attending to the tokens that came before a particular token to simulate the autoregressive decoding used during model inference. This is crucial for the training of decoder-only models, as allowing a token to attend to future tokens would constitute a data leak, preventing successful training. A major problem potentially facing any token-mixing strategy is the possibility of a data leak, making the strategy inappropriate for use with decoder-only models. In Continuous-MoE, the tokens are mixed across batch, i.e. with other tokens at the same position in other samples in the same training batch. We don’t consider other strategies which would be more suitable in the context of encoders."
+  },
+  {
+    "objectID": "posts/cont_moe/index.html#experimental-setup",
+    "href": "posts/cont_moe/index.html#experimental-setup",
+    "title": "Continuous Mixture-of-Experts",
+    "section": "Experimental setup",
+    "text": "Experimental setup\nIn our experiments we train the models for \\(250{,}000\\) steps using a cosine LR scheduler with \\(2500\\) steps of warmup, and final LR equal to \\(0.1\\) of the peak LR. The context length is \\(256\\) tokens and the batch size is \\(256\\). We tune the max LR separately for each model."
+  },
+  {
+    "objectID": "posts/cont_moe/index.html#co-tam-dalej",
+    "href": "posts/cont_moe/index.html#co-tam-dalej",
+    "title": "Continuous Mixture-of-Experts",
+    "section": "Co tam dalej",
+    "text": "Co tam dalej\nContMoE vs dense vs expert choice (GPT-BERT mini) Each run was optimized for that many batches of given size Contmoe is better than dense"
+  },
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "Blog of LLM-Random research group, centered in IDEAS NCBR, started in mid-2022 by Sebastian Jaszczur. Members, in the order of joining, listed below.\n\nSebastian Jaszczur\nMarek Cygan (as advisor)\nJakub Krajewski\nSzymon Antoniak\nMaciej Pióro\nTomasz Odrzygóźdź\nJan Ludziejewski\nMichał Krutul\n\nPublic repositories of the group are available at LLM-Random organization on GitHub."
+  },
+  {
+    "objectID": "posts/cont_moe/index.html",
+    "href": "posts/cont_moe/index.html",
+    "title": "Continuous Mixture-of-Experts",
+    "section": "",
+    "text": "aaa"
   }
 ]
