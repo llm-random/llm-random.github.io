@@ -60,7 +60,7 @@
     "href": "posts/cont_moe/index.html#limitations-of-current-approaches-sekcja-8.2-w-paperze-sa",
     "title": "Continuous Mixture-of-Experts",
     "section": "Limitations of Current Approaches (sekcja 8.2 w paperze) SA",
-    "text": "Limitations of Current Approaches (sekcja 8.2 w paperze) SA\nWithout mentioning papers - obecne podejścia są niestabilne - mamy idealny balancing token -&gt; expert"
+    "text": "Limitations of Current Approaches (sekcja 8.2 w paperze) SA\n\nWithout mentioning papers - obecne podejścia są niestabilne - mamy idealny balancing token -&gt; expert"
   },
   {
     "objectID": "posts/cont_moe/index.html#encoder-vs-decoder",
@@ -95,6 +95,41 @@
     "href": "posts/cont_moe/index.html",
     "title": "Continuous Mixture-of-Experts",
     "section": "",
-    "text": "aaa"
+    "text": "POMYSŁ\nnazwa papera i techniki - Mixture of Tokens !!!!!!!!!!!!!!!!"
+  },
+  {
+    "objectID": "posts/cont_moe/index.html#temeprature-annealing",
+    "href": "posts/cont_moe/index.html#temeprature-annealing",
+    "title": "Continuous Mixture-of-Experts",
+    "section": "Temeprature annealing:",
+    "text": "Temeprature annealing:\nIn base Continues-MoE setup tokens from various samples in the batch are mingled. This theoretically opens doors for being able to tease out the output of one batch sample by another. However, this may pave the way for potential issues.\nTo tackle this problem, we plan to conduct an experiment where in the final phase of this experiment will involve a strategic, gradual reduction of temperature, hile simultaneously maintaining a low loss - a process referred to as ‘temerature annealing’. The anticipated outcome is a discrete-routing model which promotes inference parallelization - a move expected to significantly boost the overall efficiency of our processes\n\nwygaszanie temperatury\nwiększe modele\nBERT (oczywiście, że będzie działać)"
+  },
+  {
+    "objectID": "posts/cont_moe/index.html#temperature-annealing",
+    "href": "posts/cont_moe/index.html#temperature-annealing",
+    "title": "Continuous Mixture-of-Experts",
+    "section": "Temperature annealing:",
+    "text": "Temperature annealing:\nIn base Continuous-MoE setup tokens from various samples in the batch are mingled. This theoretically opens doors for being able to tease out the output of one batch sample by another. However, this may pave the way for potential issues.\nTo tackle this problem, we plan to conduct an experiment where in the final phase of this experiment will involve a strategic, gradual reduction of temperature, hile simultaneously maintaining a low loss - a process referred to as ‘temerature annealing’. The anticipated outcome is a discrete-routing model which promotes inference parallelization - a move expected to significantly boost the overall efficiency of our processes"
+  },
+  {
+    "objectID": "posts/cont_moe/index.html#scaling-up-models",
+    "href": "posts/cont_moe/index.html#scaling-up-models",
+    "title": "Continuous Mixture-of-Experts",
+    "section": "Scaling Up Models",
+    "text": "Scaling Up Models\nIn a previous section  we showcased results for a BERT-mini FLOP matched Continues-MoE. Our preliminary experiments are also suggesting promising outcomes for larger models. In upcoming weeks we aim to prepare comprehensive comparison of all associated models."
+  },
+  {
+    "objectID": "posts/cont_moe/index.html#do-not-forget-about-a-bert",
+    "href": "posts/cont_moe/index.html#do-not-forget-about-a-bert",
+    "title": "Continuous Mixture-of-Experts",
+    "section": "Do not forget about a BERT",
+    "text": "Do not forget about a BERT\nAs our results in this post covers only GPT model in future work we plan to compare resuts of Continues-MoE with other models on BERT. Our preliminary experiments are also suggesting promising outcomes for larger models. hus, we’re gearing up to provide a thorough comparison of all associated models in upcoming weeks."
+  },
+  {
+    "objectID": "posts/cont_moe/index.html#implementation",
+    "href": "posts/cont_moe/index.html#implementation",
+    "title": "Continuous Mixture-of-Experts",
+    "section": "Implementation",
+    "text": "Implementation\n\nIn the first phase of our Continuous-MoE Layer, we partition batch sequences into groups of tokens, ensuring each group is of equal size.\nFor each group, we acquire a set of weights, named merge and emit. The sum of weights in both merge and emit equals 1 for every group, signifying the percentage of each token to utilize.\nIn every group, using merge weights, we consolidate each token group into a single token. Following this, we process all merged tokens with linear experts’ weights and a relu activation function. Employing emit weights, we redistribute resultant tokens from the experts’ layer back to a group of tokens.\nLastly, we disassemble the groups to align with the Continuous-MoE input dimensions. - encoder vs decoder MP"
   }
 ]
