@@ -1,5 +1,5 @@
 ---
-title: "Continuous Mixture-of-Experts"
+title: "Mixture of Tokens"
 author:
     -   name: Szymon Antoniak \*
         equal-contributor: true
@@ -50,7 +50,7 @@ bibliography: bibliography.bib
 # csl: apa.csl
 # date-modified: "2023-09-29"
 categories: []
-image: "logo.png"
+image: "mot_logo.png"
 format:
   html:
     template-partials:
@@ -60,22 +60,28 @@ format:
           <script charset="utf-8" src="https://cdn.plot.ly/plotly-2.20.0.min.js"/>
 ---
 
-###################################################################### POMYSŁ ###############################################################################
 
-nazwa papera i techniki - Mixture of Tokens
-!!!!!!!!!!!!!!!!
+# Introduction 
+Mixture of Experts architectures have recently garnerned considerable attention for their ability to increase the size of Transformer architectures while keeping the computational cost of training and inference constant. The most successful MoE approaches achieve this by activating only subsets of a very large feed forward layer for each processed token. 
 
-# Introduction (Abstract) SA
-Mixture of Experts architectures have recently garnerned considerable attention for their ability to increase the size of Large Language Models while keeping the computational cost of training and inference constant. The most successful MoE approaches achieve this by activating only subsets of a very large feed forward layer for each processed token. This technique comes at a cost: the expert assignment operation must be discrete, which forces the use of gradient estimators for traditional gradient-based optimisation; the models are known to suffer from training issues such as training instability, under- and overload of _experts_ (subsets of the FeedForward layer) that lead to time overheads, leaving some tokens unprocessed, problems with expert exploration and specialization/redundancy, and finally communication costs in parallel training. While some of these problems can be alleviated with e.g. the use of various auxiliary losses or reduced initialisation scale, it is certain that existing MoE techniques are more difficult and less intuitive to train. With this motivation, we propose Mixture of Tokens: a new, fully-differentiable type of architecture that retains all efficiency benefits of MoE and alleviates the aformentioned problem by mixing _tokens_ before feeding them into the FeedForward layer. We would like to point that this architecture is also fully compatible with both masked and causual LLM training.
+This technique comes at a cost, though: the choice of that subset of parameters for a given token is a discrete operation, and as such its training requires either the use of gradient estimators for traditional gradient-based optimisation or non-gradient based techniques; the models are known to suffer from issues such as training instability, under- and overload of _experts_ (subsets of the FeedForward layer) and more. While some of those problems can be alleviated with e.g. the use of various auxiliary losses or reduced initialisation scale, it is certain that existing MoE techniques are more difficult and less intuitive to train. 
 
-# Motivation SA
-## MoE SA
-Why MoE is cool. Why MoE is hard.
+With this motivation, we propose Mixture of Tokens: a new, fully-differentiable type of architecture that retains all efficiency benefits of MoE and alleviates the aformentioned problem by mixing _tokens_ before feeding them into the FeedForward layer. This technique is fully compatible with both masked and causual LLM training.
+
+# Motivation 
+## Scaling with Mixture of Experts 
+Existing Mixture of Experts approaches have demonstrated very impressive results in training huge models for language [@Switch], vision [@moe_vision] and more [@moe_multimodal]. The core idea is to replace the FeedForward layer standard for Transformer architectures with a set of _experts_, usually also MLPs, and have each token be processed by a subset of experts. 
+
+{{< include plot1sa.qmd >}}
+
+The increased model size, despite keeping computational cost during training and inference constant, leads to significant performance improvements, and has been shown to behave predictably with respect to parameter count and inference compute [scaling moe], similarly to the standard dense Transformer models [scaling,chinchilla]. 
+
+However, following the success of those initial huge parameter-count models, thorough analysis of the model training and inference schemes uncovered that using Mixture of Experts techiques brings about an entirely new suite of challenges.
 
 
-# Related Work MP
-<!-- Co tu? Softmoe, Mixowanie ekspertów, Expert choice? I co jeszcze tutaj -->
-In recent years, there has been a growing interest in methods of increasing the number of parameters in neural networks while maintaining their computational demands. A major advance in eliminating some problems with traditional MoE approaches is Expert Choice (here biblio). Our work has been inspired by their approach - Continuous MoE can be seen as an Expert Choice (as opposed to *Token Choice*) kind of method.
+## Mixture of Experts: A Quick Recap
+In recent years, there has been a growing interest in methods of increasing the number of parameters in neural networks while maintaining their computational demands. A major advance in eliminating some problems with traditional MoE approaches is Expert Choice (here biblio). Our work has been inspired by their approach - MoT can be seen as an Expert Choice (as opposed to *Token Choice*) kind of method.
+
 
 There is also concurrent work (Softmoe) investigating ideas similar to ours in the vision domain. It is, however, limited to encoder-only models. It is worth noting that earlier, other fully-differentiable MoE approaches had been proposed (biblio copied from Softmoe). /* jakoś inaczej sformułowac: However, expert-mixing strategies presented in those works incur significant computational overhead. Also, they are token choice instead of expert choice, so different than us. */
 
@@ -85,23 +91,30 @@ Without mentioning papers
 - obecne podejścia są niestabilne
 - mamy idealny balancing token -> expert
 
+with training stability, management of expert _load_ (how many tokens are routed to each expert) that lead to time overheads, mode collapse (all tokens routed to a small portion of the expert set), leaving some tokens unprocessed, problems with expert exploration and specialization/redundancy, low performance of discrete operations on accelerators and finally communication costs in parallel training.
+
+
 # Method 
 - Diagram SJ
 
+{{< include diagrams/general1.qmd >}}
+
+
+
 ## Implementation
 <!-- MK -->
-In the first phase of our Continuous-MoE Layer, we partition batch sequences into groups of tokens, ensuring each group is of equal size. 
+In the first phase of our MoT Layer, we partition batch sequences into groups of tokens, ensuring each group is of equal size. 
 
 For each group, we acquire a set of weights, named merge and emit. The sum of weights in both merge and emit equals 1 for every group, signifying the percentage of each token to utilize.
 
 In every group, using merge weights, we consolidate each token group into a single token. Following this, we process all merged tokens with linear experts' weights and a relu activation function. Employing emit weights, we redistribute resultant tokens from the experts' layer back to a group of tokens. 
 
-Lastly, we disassemble the groups to align with the Continuous-MoE input dimensions.
+Lastly, we disassemble the groups to align with the MoT input dimensions.
 - encoder vs decoder MP
 
 ## Encoder vs Decoder
 In encoder-only models, each token may attend to the whole input sequence, whereas decoder-only models only allow attending to the tokens that came before a particular token to simulate the autoregressive decoding used during model inference. This is crucial for the training of decoder-only models, as allowing a token to attend to future tokens would constitute a data leak, preventing successful training.
-A major problem potentially facing any token-mixing strategy is the possibility of a data leak, making the strategy inappropriate for use with decoder-only models. In Continuous-MoE, the tokens are mixed across batch, i.e. with other tokens at the same position in other samples in the same training batch. We don't consider other strategies which would be more suitable in the context of encoders.
+A major problem potentially facing any token-mixing strategy is the possibility of a data leak, making the strategy inappropriate for use with decoder-only models. In MoT, the tokens are mixed across batch, i.e. with other tokens at the same position in other samples in the same training batch. We don't consider other strategies which would be more suitable in the context of encoders.
 
 
 # Experiments MP / SA
@@ -120,7 +133,7 @@ Contmoe is better than dense
 Coming up in the following weeks, we're ready to take our work up a notch with a few advancements that we're covering in this segment.
 
 ## Temperature annealing:
-In base Continuous-MoE setup tokens from various samples in the batch are mingled. This theoretically opens doors for being able to tease out the output of one batch sample by another. However, this may pave the way for potential issues.
+In base MoT setup tokens from various samples in the batch are mingled. This theoretically opens doors for being able to tease out the output of one batch sample by another. However, this may pave the way for potential issues.
 
 To tackle this problem, we plan to conduct an experiment where in the final phase of this experiment will involve a strategic, gradual reduction of temperature, hile simultaneously maintaining a low loss - a process referred to as 'temerature annealing'. The anticipated outcome is a discrete-routing model which promotes inference parallelization - a move expected to significantly boost the overall efficiency of our processes
 
@@ -133,4 +146,4 @@ As our results in this post covers only GPT model in future work we plan to comp
 
 
 # Conclusions SJ
-We have shown the preliminary results showing the promise of continuous Mixture of Experts improving both the stability of training and final performance of the model. More thorough experiments are underway at the moment and we will release the paper with more results in the coming weeks. In the meantime, you can contact us with any feedback you have at llm.random.team@gmail.com .
+We have shown the preliminary results showing the promise of MoT improving both the stability of training and final performance of the model. More thorough experiments are underway at the moment and we will release the paper with more results in the coming weeks. In the meantime, you can contact us with any feedback you have at llm.random.team@gmail.com .

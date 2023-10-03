@@ -6,17 +6,8 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="author" content="Szymon Antoniak *">
-<meta name="author" content="Michał Krutul">
-<meta name="author" content="Maciej Pióro">
-<meta name="author" content="Jakub Krajewski">
-<meta name="author" content="Jan Ludziejewski">
-<meta name="author" content="Tomasz Odrzygóźdź">
-<meta name="author" content="Marek Cygan ‡">
-<meta name="author" content="Sebastian Jaszczur †">
-<meta name="dcterms.date" content="2023-09-29">
 
-<title>llm-random – RAW HTML CONTENT</title>
+<title>llm-random – plot1sa</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -68,10 +59,7 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
-<script charset="utf-8" src="https://cdn.plot.ly/plotly-2.20.0.min.js">
 
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <link rel="stylesheet" href="../../styles.css">
 </head>
@@ -105,122 +93,7 @@ ul.task-list li input[type="checkbox"] {
     </nav>
 </header>
 <!-- content -->
-<header id="title-block-header" class="quarto-title-block default page-columns page-full">
-  <div class="quarto-title-banner page-columns page-full">
-    <div class="quarto-title column-body">
-      <h1 class="title">RAW HTML CONTENT</h1>
-                      </div>
-  </div>
-    
-  <div class="quarto-title-meta-author">
-    <div class="quarto-title-meta-heading">Authors</div>
-    <div class="quarto-title-meta-heading">Affiliations</div>
-    
-      <div class="quarto-title-meta-contents">
-      <p class="author">Szymon Antoniak * </p>
-    </div>
-      <div class="quarto-title-meta-contents">
-          <p class="affiliation">
-              IDEAS NCBR
-            </p>
-          <p class="affiliation">
-              University of Warsaw
-            </p>
-        </div>
-        <div class="quarto-title-meta-contents">
-      <p class="author">Michał Krutul </p>
-    </div>
-      <div class="quarto-title-meta-contents">
-          <p class="affiliation">
-              IDEAS NCBR
-            </p>
-          <p class="affiliation">
-              University of Warsaw
-            </p>
-        </div>
-        <div class="quarto-title-meta-contents">
-      <p class="author">Maciej Pióro </p>
-    </div>
-      <div class="quarto-title-meta-contents">
-          <p class="affiliation">
-              IDEAS NCBR
-            </p>
-          <p class="affiliation">
-              University of Warsaw
-            </p>
-        </div>
-        <div class="quarto-title-meta-contents">
-      <p class="author">Jakub Krajewski </p>
-    </div>
-      <div class="quarto-title-meta-contents">
-          <p class="affiliation">
-              IDEAS NCBR
-            </p>
-          <p class="affiliation">
-              University of Warsaw
-            </p>
-        </div>
-        <div class="quarto-title-meta-contents">
-      <p class="author">Jan Ludziejewski </p>
-    </div>
-      <div class="quarto-title-meta-contents">
-          <p class="affiliation">
-              IDEAS NCBR
-            </p>
-          <p class="affiliation">
-              University of Warsaw
-            </p>
-        </div>
-        <div class="quarto-title-meta-contents">
-      <p class="author">Tomasz Odrzygóźdź </p>
-    </div>
-      <div class="quarto-title-meta-contents">
-          <p class="affiliation">
-              IDEAS NCBR
-            </p>
-          <p class="affiliation">
-              University of Warsaw
-            </p>
-        </div>
-        <div class="quarto-title-meta-contents">
-      <p class="author">Marek Cygan ‡ </p>
-    </div>
-      <div class="quarto-title-meta-contents">
-          <p class="affiliation">
-              University of Warsaw
-            </p>
-          <p class="affiliation">
-              Nomagic
-            </p>
-        </div>
-        <div class="quarto-title-meta-contents">
-      <p class="author">Sebastian Jaszczur † </p>
-    </div>
-      <div class="quarto-title-meta-contents">
-          <p class="affiliation">
-              IDEAS NCBR
-            </p>
-          <p class="affiliation">
-              University of Warsaw
-            </p>
-        </div>
-      </div>
-
-  <div class="quarto-title-meta">
-
-        
-      <div>
-      <div class="quarto-title-meta-heading">Published</div>
-      <div class="quarto-title-meta-contents">
-        <p class="date">September 29, 2023</p>
-      </div>
-    </div>
-    
-      
-    </div>
-    
-  
-  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
     
@@ -230,18 +103,6 @@ ul.task-list li input[type="checkbox"] {
 
 
 
-<section id="introduction" class="level1">
-<h1>Introduction</h1>
-<p>Mixture of Experts architectures have recently garnerned considerable attention for their ability to increase the size of Transformer architectures while keeping the computational cost of training and inference constant. The most successful MoE approaches achieve this by activating only subsets of a very large feed forward layer for each processed token.</p>
-<p>This technique comes at a cost, though: the choice of that subset of parameters for a given token is a discrete operation, and as such its training requires either the use of gradient estimators for traditional gradient-based optimisation or non-gradient based techniques; the models are known to suffer from issues such as training instability, under- and overload of <em>experts</em> (subsets of the FeedForward layer) and more. While some of those problems can be alleviated with e.g.&nbsp;the use of various auxiliary losses or reduced initialisation scale, it is certain that existing MoE techniques are more difficult and less intuitive to train.</p>
-<p>With this motivation, we propose Mixture of Tokens: a new, fully-differentiable type of architecture that retains all efficiency benefits of MoE and alleviates the aformentioned problem by mixing <em>tokens</em> before feeding them into the FeedForward layer. This technique is fully compatible with both masked and causual LLM training.</p>
-</section>
-<section id="motivation" class="level1">
-<h1>Motivation</h1>
-<section id="scaling-model-size-with-mixture-of-experts" class="level2">
-<h2 class="anchored" data-anchor-id="scaling-model-size-with-mixture-of-experts">Scaling model size with Mixture of Experts</h2>
-<p>Existing Mixture of Experts approaches have demonstrated very impressive results in training huge models for language <span class="citation" data-cites="Switch">(<a href="#ref-Switch" role="doc-biblioref"><strong>Switch?</strong></a>)</span>, vision <span class="citation" data-cites="moe_vision">(<a href="#ref-moe_vision" role="doc-biblioref"><strong>moe_vision?</strong></a>)</span> and more <span class="citation" data-cites="moe_multimodal">(<a href="#ref-moe_multimodal" role="doc-biblioref"><strong>moe_multimodal?</strong></a>)</span>. The core idea is to replace the FeedForward layer standard for Transformer architectures with a set of <em>experts</em>, usually also MLPs, and have each token be processed by a subset of experts.</p>
-
 
 <title>generic_moe</title>
 <meta charset="utf-8">
@@ -250,84 +111,11 @@ ul.task-list li input[type="checkbox"] {
 <script type="text/javascript" src="https://viewer.diagrams.net/js/viewer-static.min.js"></script>
 
 
-<p>The increased model size, despite keeping computational cost during training and inference constant, leads to significant performance improvements, and has been shown to behave predictably with respect to parameter count and inference compute [scaling moe], similarly to the standard dense Transformer models [scaling,chinchilla].</p>
-<p>However, following the success of those initial huge parameter-count models, thorough analysis of the model training and inference schemes uncovered that using Mixture of Experts techiques brings about an entirely new suite of challenges.</p>
-</section>
-</section>
-<section id="related-work-mp" class="level1">
-<h1>Related Work MP</h1>
-<!-- Co tu? Softmoe Mixowanie ekspertów, Expert choice? I co jeszcze tutaj -->
-<p>In recent years, there has been a growing interest in methods of increasing the number of parameters in neural networks while maintaining their computational demands. A major advance in eliminating some problems with traditional MoE approaches is Expert Choice (here biblio). Our work has been inspired by their approach - MoT can be seen as an Expert Choice (as opposed to <em>Token Choice</em>) kind of method.</p>
-<p>There is also concurrent work (Softmoe) investigating ideas similar to ours in the vision domain. It is, however, limited to encoder-only models. It is worth noting that earlier, other fully-differentiable MoE approaches had been proposed (biblio copied from Softmoe). /* jakoś inaczej sformułowac: However, expert-mixing strategies presented in those works incur significant computational overhead. Also, they are token choice instead of expert choice, so different than us. */</p>
-<section id="limitations-of-current-approaches-sekcja-8.2-w-paperze-sa" class="level2">
-<h2 class="anchored" data-anchor-id="limitations-of-current-approaches-sekcja-8.2-w-paperze-sa">Limitations of Current Approaches (sekcja 8.2 w paperze) SA</h2>
-<!-- JK - byłoby bardziej logicze dać tę sekcję pod related work -->
-<p>Without mentioning papers - obecne podejścia są niestabilne - mamy idealny balancing token -&gt; expert</p>
-<p>with training stability, management of expert <em>load</em> (how many tokens are routed to each expert) that lead to time overheads, mode collapse (all tokens routed to a small portion of the expert set), leaving some tokens unprocessed, problems with expert exploration and specialization/redundancy, low performance of discrete operations on accelerators and finally communication costs in parallel training.</p>
-</section>
-</section>
-<section id="method" class="level1">
-<h1>Method</h1>
-<ul>
-<li>Diagram SJ</li>
-</ul>
-<iframe width="780" height="500" src="https://viewer.diagrams.net/index.html?tags=%7B%7D&amp;highlight=0000ff&amp;edit=_blank&amp;layers=1&amp;nav=1&amp;page-id=abJAIyk8VqZmFR_1QRqh&amp;title=Untitled%20Diagram.drawio#Uhttps%3A%2F%2Fdrive.google.com%2Fuc%3Fid%3D1jvew0ft43zpaG-iCk7Ob2ilJw7VjsyeZ%26export%3Ddownload#%7B%22pageId%22%3A%22abJAIyk8VqZmFR_1QRqh%22%7D
-" title="Figure">
-<section id="implementation" class="level2">
-<h2>Implementation</h2>
-<!-- MK -->
-<p>In the first phase of our MoT Layer, we partition batch sequences into groups of tokens, ensuring each group is of equal size.</p>
-<p>For each group, we acquire a set of weights, named merge and emit. The sum of weights in both merge and emit equals 1 for every group, signifying the percentage of each token to utilize.</p>
-<p>In every group, using merge weights, we consolidate each token group into a single token. Following this, we process all merged tokens with linear experts’ weights and a relu activation function. Employing emit weights, we redistribute resultant tokens from the experts’ layer back to a group of tokens.</p>
-<p>Lastly, we disassemble the groups to align with the MoT input dimensions. - encoder vs decoder MP</p>
-</section>
-<section id="encoder-vs-decoder" class="level2">
-<h2>Encoder vs Decoder</h2>
-<p>In encoder-only models, each token may attend to the whole input sequence, whereas decoder-only models only allow attending to the tokens that came before a particular token to simulate the autoregressive decoding used during model inference. This is crucial for the training of decoder-only models, as allowing a token to attend to future tokens would constitute a data leak, preventing successful training. A major problem potentially facing any token-mixing strategy is the possibility of a data leak, making the strategy inappropriate for use with decoder-only models. In MoT, the tokens are mixed across batch, i.e. with other tokens at the same position in other samples in the same training batch. We don’t consider other strategies which would be more suitable in the context of encoders.</p>
-</section>
-</section>
-<section id="experiments-mp-sa" class="level1">
-<h1>Experiments MP / SA</h1>
-<section id="experimental-setup" class="level2">
-<h2>Experimental setup</h2>
-<p>In our experiments we train the models for <span class="math inline">\(250{,}000\)</span> steps using a cosine LR scheduler with <span class="math inline">\(2500\)</span> steps of warmup, and final LR equal to <span class="math inline">\(0.1\)</span> of the peak LR. The context length is <span class="math inline">\(256\)</span> tokens and the batch size is <span class="math inline">\(256\)</span>. We tune the max LR separately for each model.</p>
-</section>
-<section id="co-tam-dalej" class="level2">
-<h2>Co tam dalej</h2>
-<p>ContMoE vs dense vs expert choice (GPT-BERT mini) Each run was optimized for that many batches of given size Contmoe is better than dense</p>
-</section>
-</section>
-<section id="on-the-horizon" class="level1">
-<h1>On the Horizon</h1>
-<!-- MK Kto wie czy to dobra nazwa, może Future Work lepsza -->
-<p>Coming up in the following weeks, we’re ready to take our work up a notch with a few advancements that we’re covering in this segment.</p>
-<section id="temperature-annealing" class="level2">
-<h2>Temperature annealing:</h2>
-<p>In base MoT setup tokens from various samples in the batch are mingled. This theoretically opens doors for being able to tease out the output of one batch sample by another. However, this may pave the way for potential issues.</p>
-<p>To tackle this problem, we plan to conduct an experiment where in the final phase of this experiment will involve a strategic, gradual reduction of temperature, hile simultaneously maintaining a low loss - a process referred to as ‘temerature annealing’. The anticipated outcome is a discrete-routing model which promotes inference parallelization - a move expected to significantly boost the overall efficiency of our processes</p>
-</section>
-<section id="scaling-up-models" class="level2">
-<h2>Scaling Up Models</h2>
-<p>In a previous section <TODO check> we showcased results for a BERT-mini FLOP matched Continues-MoE. Our preliminary experiments are also suggesting promising outcomes for larger models. In upcoming weeks we aim to prepare comprehensive comparison of all associated models.</p>
-</section>
-<section id="do-not-forget-about-a-bert" class="level2">
-<h2>Do not forget about a BERT</h2>
-<p>As our results in this post covers only GPT model in future work we plan to compare resuts of Continues-MoE with other models on BERT. Our preliminary experiments are also suggesting promising outcomes for larger models. hus, we’re gearing up to provide a thorough comparison of all associated models in upcoming weeks.</p>
-</section>
-</section>
-<section id="conclusions-sj" class="level1">
-<h1>Conclusions SJ</h1>
-<p>We have shown the preliminary results showing the promise of MoT improving both the stability of training and final performance of the model. More thorough experiments are underway at the moment and we will release the paper with more results in the coming weeks. In the meantime, you can contact us with any feedback you have at llm.random.team@gmail.com .</p>
-<div id="quarto-navigation-envelope" class="hidden">
-<p><span class="hidden" data-render-id="quarto-int-sidebar-title">llm-random</span> <span class="hidden" data-render-id="quarto-int-navbar-title">llm-random</span> <span class="hidden" data-render-id="quarto-int-navbar:About">About</span> <span class="hidden" data-render-id="quarto-int-navbar:/about.html">/about.html</span></p>
-</div>
-<div id="quarto-meta-markdown" class="hidden">
-<p><span class="hidden" data-render-id="quarto-metatitle">llm-random - Mixture of Tokens</span> <span class="hidden" data-render-id="quarto-twittercardtitle">llm-random - Mixture of Tokens</span> <span class="hidden" data-render-id="quarto-ogcardtitle">llm-random - Mixture of Tokens</span> <span class="hidden" data-render-id="quarto-metasitename">llm-random</span> <span class="hidden" data-render-id="quarto-twittercarddesc"></span> <span class="hidden" data-render-id="quarto-ogcardddesc"></span></p>
-</div>
-</section>
+
+
 
 </main> <!-- /main -->
-<script id = "quarto-html-after-body" type="application/javascript">
+<script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {
     const mode = bsSheetEl.getAttribute("data-mode");
@@ -562,6 +350,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 </script>
 </div> <!-- /content -->
 
-</body>
 
-</html></iframe></section></main></div></body></html>
+
+</body></html>
