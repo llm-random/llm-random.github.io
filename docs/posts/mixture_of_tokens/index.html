@@ -16,7 +16,7 @@
 <meta name="author" content="Sebastian Jaszczur †">
 <meta name="dcterms.date" content="2023-09-29">
 
-<title>llm-random – RAW HTML CONTENT</title>
+<title>llm-random - Mixture of Tokens</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -68,7 +68,65 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
-<script charset="utf-8" src="https://cdn.plot.ly/plotly-2.20.0.min.js">
+<script charset="utf-8" src="https://cdn.plot.ly/plotly-2.20.0.min.js"> </script>
+<style>
+
+  .MK {
+  color: brown;
+  }
+  .MK::before {
+  content: "[MK] ";
+  }
+
+  .SA {
+  color: purple;
+  }
+  .SA::before {
+  content: "[SA] ";
+  }
+
+  .MP {
+  color: teal;
+  }
+  .MP::before {
+  content: "[MP] ";
+  }
+
+  .JK {
+  color: coral;
+  }
+  .JK::before {
+  content: "[JK] ";
+  }
+
+  .JL {
+  color: green;
+  }
+  .JL::before {
+  content: "[JL] ";
+  }
+
+  .TO {
+  color: mediumslateblue;
+  }
+  .TO::before {
+  content: "[TO] ";
+  }
+
+  .MC {
+  color: red;
+  }
+  .MC::before {
+  content: "[MC] ";
+  }
+
+  .SJ {
+  color: goldenrod;
+  }
+  .SJ::before {
+  content: "[SJ] ";
+  }
+</style>
 
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
@@ -230,6 +288,17 @@ ul.task-list li input[type="checkbox"] {
 
 
 
+<section id="test" class="level1">
+<h1>TEST</h1>
+<p><span class="SA">new text</span><del>old text</del></p>
+<p><span class="MK">new text</span><del>old text</del></p>
+<p><span class="MP">new text</span><del>old text</del></p>
+<p><span class="JK">new text</span><del>old text</del></p>
+<p><span class="JL">new text</span><del>old text</del></p>
+<p><span class="TO">new text</span><del>old text</del></p>
+<p><span class="SJ">new text</span><del>old text</del></p>
+<p><span class="MC">new text</span><del>old text</del></p>
+</section>
 <section id="introduction" class="level1">
 <h1>Introduction</h1>
 <p>Mixture of Experts architectures have recently garnerned considerable attention for their ability to increase the size of Transformer architectures while keeping the computational cost of training and inference constant. The most successful MoE approaches achieve this by activating only subsets of a very large feed forward layer for each processed token.</p>
@@ -271,9 +340,9 @@ ul.task-list li input[type="checkbox"] {
 <li>Diagram SJ</li>
 </ul>
 <iframe width="780" height="500" src="https://viewer.diagrams.net/index.html?tags=%7B%7D&amp;highlight=0000ff&amp;edit=_blank&amp;layers=1&amp;nav=1&amp;page-id=abJAIyk8VqZmFR_1QRqh&amp;title=Untitled%20Diagram.drawio#Uhttps%3A%2F%2Fdrive.google.com%2Fuc%3Fid%3D1jvew0ft43zpaG-iCk7Ob2ilJw7VjsyeZ%26export%3Ddownload#%7B%22pageId%22%3A%22abJAIyk8VqZmFR_1QRqh%22%7D
-" title="Figure">
+" title="Figure"></iframe>
 <section id="implementation" class="level2">
-<h2>Implementation</h2>
+<h2 class="anchored" data-anchor-id="implementation">Implementation</h2>
 <!-- MK -->
 <p>In the first phase of our MoT Layer, we partition batch sequences into groups of tokens, ensuring each group is of equal size.</p>
 <p>For each group, we acquire a set of weights, named merge and emit. The sum of weights in both merge and emit equals 1 for every group, signifying the percentage of each token to utilize.</p>
@@ -281,18 +350,19 @@ ul.task-list li input[type="checkbox"] {
 <p>Lastly, we disassemble the groups to align with the MoT input dimensions. - encoder vs decoder MP</p>
 </section>
 <section id="encoder-vs-decoder" class="level2">
-<h2>Encoder vs Decoder</h2>
-<p>In encoder-only models, each token may attend to the whole input sequence, whereas decoder-only models only allow attending to the tokens that came before a particular token to simulate the autoregressive decoding used during model inference. This is crucial for the training of decoder-only models, as allowing a token to attend to future tokens would constitute a data leak, preventing successful training. A major problem potentially facing any token-mixing strategy is the possibility of a data leak, making the strategy inappropriate for use with decoder-only models. In MoT, the tokens are mixed across batch, i.e. with other tokens at the same position in other samples in the same training batch. We don’t consider other strategies which would be more suitable in the context of encoders.</p>
+<h2 class="anchored" data-anchor-id="encoder-vs-decoder">Encoder vs Decoder</h2>
+<p>In encoder-only models, each token may attend to the whole input sequence, whereas decoder-only models only allow attending to the tokens that came before a particular token to simulate the autoregressive decoding used during model inference. This is crucial for the training of decoder-only models, as allowing a token to attend to future tokens would constitute a data leak, preventing successful training. A major problem potentially facing any token-mixing strategy is the possibility of a data leak, making the strategy inappropriate for use with decoder-only models. In MoT, the tokens are mixed across batch, i.e.&nbsp;with other tokens at the same position in other samples in the same training batch. We don’t consider other strategies which would be more suitable in the context of encoders.</p>
 </section>
 </section>
 <section id="experiments-mp-sa" class="level1">
 <h1>Experiments MP / SA</h1>
 <section id="experimental-setup" class="level2">
-<h2>Experimental setup</h2>
+<h2 class="anchored" data-anchor-id="experimental-setup">Experimental setup</h2>
 <p>In our experiments we train the models for <span class="math inline">\(250{,}000\)</span> steps using a cosine LR scheduler with <span class="math inline">\(2500\)</span> steps of warmup, and final LR equal to <span class="math inline">\(0.1\)</span> of the peak LR. The context length is <span class="math inline">\(256\)</span> tokens and the batch size is <span class="math inline">\(256\)</span>. We tune the max LR separately for each model.</p>
+<p><img src="loss_step.png" class="img-fluid" alt="Performance by step"> <img src="html-figure.png" class="img-fluid" alt="Performance by step"></p>
 </section>
 <section id="co-tam-dalej" class="level2">
-<h2>Co tam dalej</h2>
+<h2 class="anchored" data-anchor-id="co-tam-dalej">Co tam dalej</h2>
 <p>ContMoE vs dense vs expert choice (GPT-BERT mini) Each run was optimized for that many batches of given size Contmoe is better than dense</p>
 </section>
 </section>
@@ -301,32 +371,28 @@ ul.task-list li input[type="checkbox"] {
 <!-- MK Kto wie czy to dobra nazwa, może Future Work lepsza -->
 <p>Coming up in the following weeks, we’re ready to take our work up a notch with a few advancements that we’re covering in this segment.</p>
 <section id="temperature-annealing" class="level2">
-<h2>Temperature annealing:</h2>
+<h2 class="anchored" data-anchor-id="temperature-annealing">Temperature annealing:</h2>
 <p>In base MoT setup tokens from various samples in the batch are mingled. This theoretically opens doors for being able to tease out the output of one batch sample by another. However, this may pave the way for potential issues.</p>
 <p>To tackle this problem, we plan to conduct an experiment where in the final phase of this experiment will involve a strategic, gradual reduction of temperature, hile simultaneously maintaining a low loss - a process referred to as ‘temerature annealing’. The anticipated outcome is a discrete-routing model which promotes inference parallelization - a move expected to significantly boost the overall efficiency of our processes</p>
 </section>
 <section id="scaling-up-models" class="level2">
-<h2>Scaling Up Models</h2>
-<p>In a previous section <TODO check> we showcased results for a BERT-mini FLOP matched Continues-MoE. Our preliminary experiments are also suggesting promising outcomes for larger models. In upcoming weeks we aim to prepare comprehensive comparison of all associated models.</p>
+<h2 class="anchored" data-anchor-id="scaling-up-models">Scaling Up Models</h2>
+<p>In a previous section <todo check=""> we showcased results for a BERT-mini FLOP matched Continues-MoE. Our preliminary experiments are also suggesting promising outcomes for larger models. In upcoming weeks we aim to prepare comprehensive comparison of all associated models.</todo></p>
 </section>
 <section id="do-not-forget-about-a-bert" class="level2">
-<h2>Do not forget about a BERT</h2>
+<h2 class="anchored" data-anchor-id="do-not-forget-about-a-bert">Do not forget about a BERT</h2>
 <p>As our results in this post covers only GPT model in future work we plan to compare resuts of Continues-MoE with other models on BERT. Our preliminary experiments are also suggesting promising outcomes for larger models. hus, we’re gearing up to provide a thorough comparison of all associated models in upcoming weeks.</p>
 </section>
 </section>
 <section id="conclusions-sj" class="level1">
 <h1>Conclusions SJ</h1>
 <p>We have shown the preliminary results showing the promise of MoT improving both the stability of training and final performance of the model. More thorough experiments are underway at the moment and we will release the paper with more results in the coming weeks. In the meantime, you can contact us with any feedback you have at llm.random.team@gmail.com .</p>
-<div id="quarto-navigation-envelope" class="hidden">
-<p><span class="hidden" data-render-id="quarto-int-sidebar-title">llm-random</span> <span class="hidden" data-render-id="quarto-int-navbar-title">llm-random</span> <span class="hidden" data-render-id="quarto-int-navbar:About">About</span> <span class="hidden" data-render-id="quarto-int-navbar:/about.html">/about.html</span></p>
-</div>
-<div id="quarto-meta-markdown" class="hidden">
-<p><span class="hidden" data-render-id="quarto-metatitle">llm-random - Mixture of Tokens</span> <span class="hidden" data-render-id="quarto-twittercardtitle">llm-random - Mixture of Tokens</span> <span class="hidden" data-render-id="quarto-ogcardtitle">llm-random - Mixture of Tokens</span> <span class="hidden" data-render-id="quarto-metasitename">llm-random</span> <span class="hidden" data-render-id="quarto-twittercarddesc"></span> <span class="hidden" data-render-id="quarto-ogcardddesc"></span></p>
-</div>
+
+
 </section>
 
 </main> <!-- /main -->
-<script id = "quarto-html-after-body" type="application/javascript">
+<script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {
     const mode = bsSheetEl.getAttribute("data-mode");
@@ -561,6 +627,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 </script>
 </div> <!-- /content -->
 
-</body>
 
-</html></iframe></section></main></div></body></html>
+
+</body></html>

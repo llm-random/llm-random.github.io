@@ -50,16 +50,91 @@ bibliography: bibliography.bib
 # csl: apa.csl
 # date-modified: "2023-09-29"
 categories: []
-image: "mot_logo.png"
+image: "logo_mot.png"
 format:
   html:
     template-partials:
     - title-block.html
     include-in-header:
       - text: |
-          <script charset="utf-8" src="https://cdn.plot.ly/plotly-2.20.0.min.js"/>
+          <script charset="utf-8" src="https://cdn.plot.ly/plotly-2.20.0.min.js"> </script>
+          <style> 
+          
+            .MK {
+            color: brown;
+            }
+            .MK::before {
+            content: "[MK] ";
+            }
+
+            .SA {
+            color: purple;
+            }
+            .SA::before {
+            content: "[SA] ";
+            }
+
+            .MP {
+            color: teal;
+            }
+            .MP::before {
+            content: "[MP] ";
+            }
+
+            .JK {
+            color: coral;
+            }
+            .JK::before {
+            content: "[JK] ";
+            }
+
+            .JL {
+            color: green;
+            }
+            .JL::before {
+            content: "[JL] ";
+            }
+
+            .TO {
+            color: mediumslateblue;
+            }
+            .TO::before {
+            content: "[TO] ";
+            }
+
+            .MC {
+            color: red;
+            }
+            .MC::before {
+            content: "[MC] ";
+            }
+
+            .SJ {
+            color: goldenrod;
+            }
+            .SJ::before {
+            content: "[SJ] ";
+            }
+          </style>
 ---
 
+# TEST
+
+[new text]{.SA}~~old text~~
+
+[new text]{.MK}~~old text~~
+
+[new text]{.MP}~~old text~~
+
+[new text]{.JK}~~old text~~
+
+[new text]{.JL}~~old text~~
+
+[new text]{.TO}~~old text~~
+
+[new text]{.SJ}~~old text~~
+
+[new text]{.MC}~~old text~~
 
 # Introduction 
 Mixture of Experts architectures have recently garnerned considerable attention for their ability to increase the size of Transformer architectures while keeping the computational cost of training and inference constant. The most successful MoE approaches achieve this by activating only subsets of a very large feed forward layer for each processed token. 
@@ -94,11 +169,11 @@ Without mentioning papers
 with training stability, management of expert _load_ (how many tokens are routed to each expert) that lead to time overheads, mode collapse (all tokens routed to a small portion of the expert set), leaving some tokens unprocessed, problems with expert exploration and specialization/redundancy, low performance of discrete operations on accelerators and finally communication costs in parallel training.
 
 
+
 # Method 
 - Diagram SJ
 
-{{< include diagrams/general1.qmd >}}
-
+{{< include diagrams/general1.qmd >}} 
 
 
 ## Implementation
@@ -121,6 +196,9 @@ A major problem potentially facing any token-mixing strategy is the possibility 
 ## Experimental setup
 In our experiments we train the models for $250{,}000$ steps using a cosine LR scheduler with $2500$ steps of warmup, and final LR equal to $0.1$ of the peak LR. The context length is $256$ tokens and the batch size is $256$.
 We tune the max LR separately for each model.
+
+![Performance by step](loss_step.png)
+![Performance by step](html-figure.png)
 
 ## Co tam dalej
 ContMoE vs dense vs expert choice (GPT-BERT mini)
