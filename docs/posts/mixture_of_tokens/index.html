@@ -301,7 +301,7 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="introduction" class="level1">
 <h1>Introduction</h1>
-<p>Mixture of Experts architectures have recently garnerned considerable attention for their ability to increase the size of Transformer architectures while keeping the computational cost of training and inference constant. The most successful MoE approaches achieve this by activating only subsets of a very large feed forward layer for each processed token.</p>
+<p>Mixture of Experts <span class="MK">(MoE)</span> architectures have recently garnerned considerable attention for their ability to increase the size of Transformer architectures while keeping the computational cost of training and inference constant. The most successful MoE approaches achieve this by activating only subsets of a very large feed forward layer for each processed token. <span class="MK">Komentarz: Czy są MoE które nie wybierają tylko części parametrów FF dla danego tokena?</span></p>
 <p>This technique comes at a cost, though: the choice of that subset of parameters for a given token is a discrete operation, and as such its training requires either the use of gradient estimators for traditional gradient-based optimisation or non-gradient based techniques; the models are known to suffer from issues such as training instability, under- and overload of <em>experts</em> (subsets of the FeedForward layer) and more. While some of those problems can be alleviated with e.g.&nbsp;the use of various auxiliary losses or reduced initialisation scale, it is certain that existing MoE techniques are more difficult and less intuitive to train.</p>
 <p>With this motivation, we propose Mixture of Tokens: a new, fully-differentiable type of architecture that retains all efficiency benefits of MoE and alleviates the aformentioned problem by mixing <em>tokens</em> before feeding them into the FeedForward layer. This technique is fully compatible with both masked and causual LLM training.</p>
 </section>
@@ -309,7 +309,7 @@ ul.task-list li input[type="checkbox"] {
 <h1>Motivation</h1>
 <section id="scaling-with-mixture-of-experts" class="level2">
 <h2 class="anchored" data-anchor-id="scaling-with-mixture-of-experts">Scaling with Mixture of Experts</h2>
-<p>Existing Mixture of Experts approaches have demonstrated very impressive results in training huge models for language <span class="citation" data-cites="Switch">(<a href="#ref-Switch" role="doc-biblioref"><strong>Switch?</strong></a>)</span>, vision <span class="citation" data-cites="moe_vision">(<a href="#ref-moe_vision" role="doc-biblioref"><strong>moe_vision?</strong></a>)</span> and more <span class="citation" data-cites="moe_multimodal">(<a href="#ref-moe_multimodal" role="doc-biblioref"><strong>moe_multimodal?</strong></a>)</span>. The core idea is to replace the FeedForward layer standard for Transformer architectures with a set of <em>experts</em>, usually also MLPs, and have each token be processed by a subset of experts.</p>
+<p>Existing <span class="MK">(MoE)</span><del>Mixture of Experts</del> approaches have demonstrated very impressive results in training huge models for language <span class="citation" data-cites="Switch">(<a href="#ref-Switch" role="doc-biblioref"><strong>Switch?</strong></a>)</span>, vision <span class="citation" data-cites="moe_vision">(<a href="#ref-moe_vision" role="doc-biblioref"><strong>moe_vision?</strong></a>)</span> and more <span class="citation" data-cites="moe_multimodal">(<a href="#ref-moe_multimodal" role="doc-biblioref"><strong>moe_multimodal?</strong></a>)</span>. The core idea is to replace <span class="MK">the standard FeedForward layer from</span> <del>the FeedForward layer standard for</del> Transformer architectures with a set of <em>experts</em>, usually also MLPs, and have each token <span class="MK">to</span> be processed by a subset of experts.</p>
 
 
 <title>generic_moe</title>
@@ -320,11 +320,8 @@ ul.task-list li input[type="checkbox"] {
 
 
 <p>The increased model size, despite keeping computational cost during training and inference constant, leads to significant performance improvements, and has been shown to behave predictably with respect to parameter count and inference compute [scaling moe], similarly to the standard dense Transformer models [scaling,chinchilla].</p>
-<p>However, following the success of those initial huge parameter-count models, thorough analysis of the model training and inference schemes uncovered that using Mixture of Experts techiques brings about an entirely new suite of challenges.</p>
-</section>
-<section id="mixture-of-experts-a-quick-recap" class="level2">
-<h2 class="anchored" data-anchor-id="mixture-of-experts-a-quick-recap">Mixture of Experts: A Quick Recap</h2>
-<p>In recent years, there has been a growing interest in methods of increasing the number of parameters in neural networks while maintaining their computational demands. A major advance in eliminating some problems with traditional MoE approaches is Expert Choice (here biblio). Our work has been inspired by their approach - MoT can be seen as an Expert Choice (as opposed to <em>Token Choice</em>) kind of method.</p>
+<p>However, following the success of those initial huge parameter-count models, thorough analysis of the model training and inference schemes uncovered that using Mixture of Experts techniques brings about an entirely new suite of challenges.</p>
+<p><span class="JK">## Background</span><del>## Mixture of Experts: A Quick Recap</del> In recent years, there has been a growing interest in methods of increasing the number of parameters in neural networks while maintaining their computational demands. A major advance in eliminating some problems with traditional MoE approaches is Expert Choice (here biblio). Our work has been inspired by their approach - MoT can be seen as an Expert Choice (as opposed to <em>Token Choice</em>) kind of method.</p>
 <p>There is also concurrent work (Softmoe) investigating ideas similar to ours in the vision domain. It is, however, limited to encoder-only models. It is worth noting that earlier, other fully-differentiable MoE approaches had been proposed (biblio copied from Softmoe). /* jakoś inaczej sformułowac: However, expert-mixing strategies presented in those works incur significant computational overhead. Also, they are token choice instead of expert choice, so different than us. */</p>
 </section>
 <section id="limitations-of-current-approaches-sekcja-8.2-w-paperze-sa" class="level2">
@@ -344,10 +341,9 @@ ul.task-list li input[type="checkbox"] {
 <section id="implementation" class="level2">
 <h2 class="anchored" data-anchor-id="implementation">Implementation</h2>
 <!-- MK -->
-<p>In the first phase of our MoT Layer, we partition batch sequences into groups of tokens, ensuring each group is of equal size.</p>
-<p>For each group, we acquire a set of weights, named merge and emit. The sum of weights in both merge and emit equals 1 for every group, signifying the percentage of each token to utilize.</p>
-<p>In every group, using merge weights, we consolidate each token group into a single token. Following this, we process all merged tokens with linear experts’ weights and a relu activation function. Employing emit weights, we redistribute resultant tokens from the experts’ layer back to a group of tokens.</p>
-<p>Lastly, we disassemble the groups to align with the MoT input dimensions. - encoder vs decoder MP</p>
+<p>In the first phase of our MoT Layer, we partition batch sequences into token gropus of equal size.</p>
+<p>Then for each group, we calculate a two sets of weights, named <em>merge</em> and <em>emit</em>. Each set of weights sum to 1.0, signifying the percentage of each token to utilize.</p>
+<p>For every group, using its <em>merge</em> weights, we merge belonging tokens into a single token. Following this, we process all merged tokens with linear experts’ weights and a relu activation function. <span class="MK">Komentarz: To zdecydowanie trzeba lepiej napisać</span> Employing <em>emit</em> weights, we redistribute resultant token after the experts’ layer back to a group of tokens. Lastly, we join the groups to align with the Feed Forward layer input dimensions.</p>
 </section>
 <section id="encoder-vs-decoder" class="level2">
 <h2 class="anchored" data-anchor-id="encoder-vs-decoder">Encoder vs Decoder</h2>
@@ -366,22 +362,22 @@ ul.task-list li input[type="checkbox"] {
 <p>ContMoE vs dense vs expert choice (GPT-BERT mini) Each run was optimized for that many batches of given size Contmoe is better than dense</p>
 </section>
 </section>
-<section id="on-the-horizon" class="level1">
-<h1>On the Horizon</h1>
+<section id="upcoming-work" class="level1">
+<h1>Upcoming Work</h1>
 <!-- MK Kto wie czy to dobra nazwa, może Future Work lepsza -->
 <p>Coming up in the following weeks, we’re ready to take our work up a notch with a few advancements that we’re covering in this segment.</p>
 <section id="temperature-annealing" class="level2">
-<h2 class="anchored" data-anchor-id="temperature-annealing">Temperature annealing:</h2>
+<h2 class="anchored" data-anchor-id="temperature-annealing">Temperature annealing</h2>
 <p>In base MoT setup tokens from various samples in the batch are mingled. This theoretically opens doors for being able to tease out the output of one batch sample by another. However, this may pave the way for potential issues.</p>
-<p>To tackle this problem, we plan to conduct an experiment where in the final phase of this experiment will involve a strategic, gradual reduction of temperature, hile simultaneously maintaining a low loss - a process referred to as ‘temerature annealing’. The anticipated outcome is a discrete-routing model which promotes inference parallelization - a move expected to significantly boost the overall efficiency of our processes</p>
+<p>To tackle this problem, we plan to conduct an experiment wherefinal phase will involve a strategic, gradual reduction of temperature, while simultaneously maintaining a low loss - a process referred to as ‘temerature annealing’. The anticipated outcome is a discrete-routing model which promotes inference parallelization - a move expected to significantly boost the overall efficiency of our processes.</p>
 </section>
 <section id="scaling-up-models" class="level2">
 <h2 class="anchored" data-anchor-id="scaling-up-models">Scaling Up Models</h2>
-<p>In a previous section <todo check=""> we showcased results for a BERT-mini FLOP matched Continues-MoE. Our preliminary experiments are also suggesting promising outcomes for larger models. In upcoming weeks we aim to prepare comprehensive comparison of all associated models.</todo></p>
+<p>In a previous section <todo check=""> we showcased results for a BERT-mini FLOP matched MoT. Our preliminary experiments are also suggesting promising outcomes for larger models. In upcoming weeks we aim to prepare comprehensive comparison of larger models with FLOP matched MoT models.</todo></p>
 </section>
 <section id="do-not-forget-about-a-bert" class="level2">
 <h2 class="anchored" data-anchor-id="do-not-forget-about-a-bert">Do not forget about a BERT</h2>
-<p>As our results in this post covers only GPT model in future work we plan to compare resuts of Continues-MoE with other models on BERT. Our preliminary experiments are also suggesting promising outcomes for larger models. hus, we’re gearing up to provide a thorough comparison of all associated models in upcoming weeks.</p>
+<p>As our results in this post covers only GPT model, in future work we plan to compare results of MoT on BERT model.</p>
 </section>
 </section>
 <section id="conclusions-sj" class="level1">

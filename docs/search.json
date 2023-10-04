@@ -200,7 +200,7 @@
     "href": "posts/mixture_of_tokens/index.html#scaling-with-mixture-of-experts",
     "title": "RAW HTML CONTENT",
     "section": "Scaling with Mixture of Experts",
-    "text": "Scaling with Mixture of Experts\nExisting Mixture of Experts approaches have demonstrated very impressive results in training huge models for language (Switch?), vision (moe_vision?) and more (moe_multimodal?). The core idea is to replace the FeedForward layer standard for Transformer architectures with a set of experts, usually also MLPs, and have each token be processed by a subset of experts.\n\n\ngeneric_moe\n\n\n\n\n\n\nThe increased model size, despite keeping computational cost during training and inference constant, leads to significant performance improvements, and has been shown to behave predictably with respect to parameter count and inference compute [scaling moe], similarly to the standard dense Transformer models [scaling,chinchilla].\nHowever, following the success of those initial huge parameter-count models, thorough analysis of the model training and inference schemes uncovered that using Mixture of Experts techiques brings about an entirely new suite of challenges."
+    "text": "Scaling with Mixture of Experts\nExisting (MoE)Mixture of Experts approaches have demonstrated very impressive results in training huge models for language (Switch?), vision (moe_vision?) and more (moe_multimodal?). The core idea is to replace the standard FeedForward layer from the FeedForward layer standard for Transformer architectures with a set of experts, usually also MLPs, and have each token to be processed by a subset of experts.\n\n\ngeneric_moe\n\n\n\n\n\n\nThe increased model size, despite keeping computational cost during training and inference constant, leads to significant performance improvements, and has been shown to behave predictably with respect to parameter count and inference compute [scaling moe], similarly to the standard dense Transformer models [scaling,chinchilla].\nHowever, following the success of those initial huge parameter-count models, thorough analysis of the model training and inference schemes uncovered that using Mixture of Experts techniques brings about an entirely new suite of challenges.\n## Background## Mixture of Experts: A Quick Recap In recent years, there has been a growing interest in methods of increasing the number of parameters in neural networks while maintaining their computational demands. A major advance in eliminating some problems with traditional MoE approaches is Expert Choice (here biblio). Our work has been inspired by their approach - MoT can be seen as an Expert Choice (as opposed to Token Choice) kind of method.\nThere is also concurrent work (Softmoe) investigating ideas similar to ours in the vision domain. It is, however, limited to encoder-only models. It is worth noting that earlier, other fully-differentiable MoE approaches had been proposed (biblio copied from Softmoe). /* jakoś inaczej sformułowac: However, expert-mixing strategies presented in those works incur significant computational overhead. Also, they are token choice instead of expert choice, so different than us. */"
   },
   {
     "objectID": "posts/mixture_of_tokens/plot1sa.html",
@@ -214,7 +214,7 @@
     "href": "posts/mixture_of_tokens/index.html#implementation",
     "title": "RAW HTML CONTENT",
     "section": "Implementation",
-    "text": "Implementation\n\nIn the first phase of our MoT Layer, we partition batch sequences into groups of tokens, ensuring each group is of equal size.\nFor each group, we acquire a set of weights, named merge and emit. The sum of weights in both merge and emit equals 1 for every group, signifying the percentage of each token to utilize.\nIn every group, using merge weights, we consolidate each token group into a single token. Following this, we process all merged tokens with linear experts’ weights and a relu activation function. Employing emit weights, we redistribute resultant tokens from the experts’ layer back to a group of tokens.\nLastly, we disassemble the groups to align with the MoT input dimensions. - encoder vs decoder MP"
+    "text": "Implementation\n\nIn the first phase of our MoT Layer, we partition batch sequences into token gropus of equal size.\nThen for each group, we calculate a two sets of weights, named merge and emit. Each set of weights sum to 1.0, signifying the percentage of each token to utilize.\nFor every group, using its merge weights, we merge belonging tokens into a single token. Following this, we process all merged tokens with linear experts’ weights and a relu activation function. Komentarz: To zdecydowanie trzeba lepiej napisać Employing emit weights, we redistribute resultant token after the experts’ layer back to a group of tokens. Lastly, we join the groups to align with the Feed Forward layer input dimensions."
   },
   {
     "objectID": "posts/mixture_of_tokens/index.html#encoder-vs-decoder",
@@ -241,21 +241,21 @@
     "objectID": "posts/mixture_of_tokens/index.html#temperature-annealing",
     "href": "posts/mixture_of_tokens/index.html#temperature-annealing",
     "title": "RAW HTML CONTENT",
-    "section": "Temperature annealing:",
-    "text": "Temperature annealing:\nIn base MoT setup tokens from various samples in the batch are mingled. This theoretically opens doors for being able to tease out the output of one batch sample by another. However, this may pave the way for potential issues.\nTo tackle this problem, we plan to conduct an experiment where in the final phase of this experiment will involve a strategic, gradual reduction of temperature, hile simultaneously maintaining a low loss - a process referred to as ‘temerature annealing’. The anticipated outcome is a discrete-routing model which promotes inference parallelization - a move expected to significantly boost the overall efficiency of our processes"
+    "section": "Temperature annealing",
+    "text": "Temperature annealing\nIn base MoT setup tokens from various samples in the batch are mingled. This theoretically opens doors for being able to tease out the output of one batch sample by another. However, this may pave the way for potential issues.\nTo tackle this problem, we plan to conduct an experiment wherefinal phase will involve a strategic, gradual reduction of temperature, while simultaneously maintaining a low loss - a process referred to as ‘temerature annealing’. The anticipated outcome is a discrete-routing model which promotes inference parallelization - a move expected to significantly boost the overall efficiency of our processes."
   },
   {
     "objectID": "posts/mixture_of_tokens/index.html#scaling-up-models",
     "href": "posts/mixture_of_tokens/index.html#scaling-up-models",
     "title": "RAW HTML CONTENT",
     "section": "Scaling Up Models",
-    "text": "Scaling Up Models\nIn a previous section  we showcased results for a BERT-mini FLOP matched Continues-MoE. Our preliminary experiments are also suggesting promising outcomes for larger models. In upcoming weeks we aim to prepare comprehensive comparison of all associated models."
+    "text": "Scaling Up Models\nIn a previous section  we showcased results for a BERT-mini FLOP matched MoT. Our preliminary experiments are also suggesting promising outcomes for larger models. In upcoming weeks we aim to prepare comprehensive comparison of larger models with FLOP matched MoT models."
   },
   {
     "objectID": "posts/mixture_of_tokens/index.html#do-not-forget-about-a-bert",
     "href": "posts/mixture_of_tokens/index.html#do-not-forget-about-a-bert",
     "title": "RAW HTML CONTENT",
     "section": "Do not forget about a BERT",
-    "text": "Do not forget about a BERT\nAs our results in this post covers only GPT model in future work we plan to compare resuts of Continues-MoE with other models on BERT. Our preliminary experiments are also suggesting promising outcomes for larger models. hus, we’re gearing up to provide a thorough comparison of all associated models in upcoming weeks."
+    "text": "Do not forget about a BERT\nAs our results in this post covers only GPT model, in future work we plan to compare results of MoT on BERT model."
   }
 ]
