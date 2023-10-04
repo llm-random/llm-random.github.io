@@ -2,8 +2,6 @@
   {
     "listing": "/index.html",
     "items": [
-      "/posts/mixture_of_tokens/diagrams/general1.html",
-      "/posts/mixture_of_tokens/plot1sa.html",
       "/posts/mixture_of_tokens/index.html",
       "/posts/neuron_recycling/index.html"
     ]

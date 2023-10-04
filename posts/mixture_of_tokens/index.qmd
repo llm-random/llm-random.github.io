@@ -68,7 +68,7 @@ format:
             }
 
             .SA {
-            color: purple;
+            color: goldenrod;
             }
             .SA::before {
             content: "[SA] ";
@@ -96,7 +96,7 @@ format:
             }
 
             .TO {
-            color: mediumslateblue;
+            color: purplen;
             }
             .TO::before {
             content: "[TO] ";
@@ -110,7 +110,7 @@ format:
             }
 
             .SJ {
-            color: goldenrod;
+            color: blue;
             }
             .SJ::before {
             content: "[SJ] ";
@@ -145,19 +145,18 @@ This technique comes at a cost, though: the choice of that subset of parameters 
 With this motivation, we propose Mixture of Tokens: a new, fully-differentiable type of architecture that retains all efficiency benefits of MoE and alleviates the aformentioned problem by mixing _tokens_ before feeding them into the FeedForward layer. This technique is fully compatible with both masked and causual LLM training.
 
 # Motivation 
-## Scaling with Mixture of Experts 
-Existing [(MoE)]{.MK}~~Mixture of Experts~~ approaches have demonstrated very impressive results in training huge models for language [@Switch], vision [@moe_vision] and more [@moe_multimodal]. The core idea is to replace [ the standard FeedForward layer from ]{.MK} ~~the FeedForward layer standard for~~ Transformer architectures with a set of _experts_, usually also MLPs, and have each token [to]{.MK} be processed by a subset of experts. 
+### Scaling Language Models
+Numerous works [@kaplan2020scaling; @hoffmann2022training] have studied benefits of increasing the size of language models for their performance. However, this scaling comes at a very high computational cost [@strubell2019energy]. Therefore, efficient use of computational resources and network parameters is often recognized as one of the most important challenges in the area [@rae2022scaling; @jaszczur2021sparse; @nawrot2022hierarchical].
 
-{{< include plot1sa.qmd >}}
+[old text...]
+Existing [(MoE)]{.MK}Mixture of Experts~~ approaches have demonstrated very impressive results in training huge models for language [@Switch], vision [@moe_vision] and more [@moe_multimodal]. The core idea is to replace [ the standard FeedForward layer from ]{.MK} ~~the FeedForward layer standard for~~ Transformer architectures with a set of _experts_, usually also MLPs, and have each token [to]{.MK} be processed by a subset of experts. 
 
 The increased model size, despite keeping computational cost during training and inference constant, leads to significant performance improvements, and has been shown to behave predictably with respect to parameter count and inference compute [scaling moe], similarly to the standard dense Transformer models [scaling,chinchilla]. 
-
 However, following the success of those initial huge parameter-count models, thorough analysis of the model training and inference schemes uncovered that using Mixture of Experts techniques brings about an entirely new suite of challenges.
 
 
 [## Background]{.JK}~~## Mixture of Experts: A Quick Recap~~
 In recent years, there has been a growing interest in methods of increasing the number of parameters in neural networks while maintaining their computational demands. A major advance in eliminating some problems with traditional MoE approaches is Expert Choice (here biblio). Our work has been inspired by their approach - MoT can be seen as an Expert Choice (as opposed to *Token Choice*) kind of method.
-
 
 There is also concurrent work (Softmoe) investigating ideas similar to ours in the vision domain. It is, however, limited to encoder-only models. It is worth noting that earlier, other fully-differentiable MoE approaches had been proposed (biblio copied from Softmoe). /* jakoś inaczej sformułowac: However, expert-mixing strategies presented in those works incur significant computational overhead. Also, they are token choice instead of expert choice, so different than us. */
 
@@ -167,14 +166,40 @@ Without mentioning papers
 - obecne podejścia są niestabilne
 - mamy idealny balancing token -> expert
 
-with training stability, management of expert _load_ (how many tokens are routed to each expert) that lead to time overheads, mode collapse (all tokens routed to a small portion of the expert set), leaving some tokens unprocessed, problems with expert exploration and specialization/redundancy, low performance of discrete operations on accelerators and finally communication costs in parallel training.
+with training stability, management of expert _load_ (how many tokens are routed to each expert) that lead to time overheads, mode collapse (all tokens routed to a small portion of the expert set), leaving some tokens unprocessed, problems with expert exploration and specialization/redundancy, low performance of discrete operations on accelerators and finally communication costs in parallel training.~~
+[...old text]
+
+# Background [MK]
+
+{{< include _plot1sa.qmd >}}
 
 
 
-# Method 
-- Diagram SJ
+# Method [SJ]
 
-{{< include diagrams/general1.qmd >}} 
+[Link to diagrams: https://drive.google.com/file/d/1jvew0ft43zpaG-iCk7Ob2ilJw7VjsyeZ/view?usp=sharing ]{.SJ}
+
+[Move this paragraph to background]{.SJ}
+The general idea of MoT is to run multiple experts which independently aggregate and process tokens. The most common (and original) form of MoE, token-choice, operates from the perspective of a single token. [This paragraph will be more detailed in background section.]{.SJ} However, MoT is more similar to expert-choice, where it is an expert who decides which tokens to process.
+
+[comparison of both token-choice and expert-choice]{.SJ}
+
+{{< include diagrams/_vanillamoes.qmd >}} 
+
+In MoT, each expert works independently from one another. [The only dependence is during experts' outputs aggregation, but it's a matter of rescaling each output before adding it to the residual, so we will skip it/explain it in later section.]{.SJ} Therefore, to explain the inner workings of MoT we will focus on a single expert. See the diagram below.
+
+
+{{< include diagrams/_general1.qmd >}} 
+
+This single expert works as a normal feedforward layer[(maybe a diagram of lin1->relu->lin2?)]{.SJ}, except for a merger and an emitter placed to process the input and the output, respectively. Each merger takes a group of tokens and computes a weighted average of them (according to weights described in later section). This is similart in spirit to the controller in expert-choice MoE - controller took a group of tokens and chose and passed only one of them (or top-k of them in general, but for now let's assume k=1). Similarly, the emitter which processes the output of the expert layer, just scales the output of the layer by a respective token's weight, and passes the resulting vector as the update for this token. Note this is, again, similart to expert choice - you can just image the weight being a one-hot encoding. [Maybe another diagram showing one-hot encoding vs MoT]{.SJ}
+
+Now we get to the part of computing weights. The weights are the same [(are they really?)]{.SJ} for both merger and emitter.
+
+{{< include diagrams/_mergeemit.qmd >}}
+
+How can we apply this technique in 
+
+
 
 
 ## Implementation

@@ -18,7 +18,7 @@
     "href": "index.html",
     "title": "llm-random",
     "section": "",
-    "text": "RAW HTML CONTENT\n\n\n\n\n\n\n\n\n\n\n \n\n\n\n\n  \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n\n\n\n\n  \n\n\n\n\nMixture of Tokens\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nSep 29, 2023\n\n\nSzymon Antoniak *, Michał Krutul, Maciej Pióro, Jakub Krajewski, Jan Ludziejewski, Tomasz Odrzygóźdź, Marek Cygan ‡, Sebastian Jaszczur †\n\n\n\n\n\n\n  \n\n\n\n\nNeuron Recycling\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nJul 11, 2023\n\n\nJakub Krajewski *, Maciej Pióro *, Sebastian Jaszczur †, Marek Cygan ‡\n\n\n\n\n\n\nNo matching items"
+    "text": "Mixture of Tokens\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nSep 29, 2023\n\n\nSzymon Antoniak *, Michał Krutul, Maciej Pióro, Jakub Krajewski, Jan Ludziejewski, Tomasz Odrzygóźdź, Marek Cygan ‡, Sebastian Jaszczur †\n\n\n\n\n\n\n  \n\n\n\n\nNeuron Recycling\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nJul 11, 2023\n\n\nJakub Krajewski *, Maciej Pióro *, Sebastian Jaszczur †, Marek Cygan ‡\n\n\n\n\n\n\nNo matching items"
   },
   {
     "objectID": "get-started.html",
@@ -179,7 +179,7 @@
     "href": "posts/mixture_of_tokens/index.html#limitations-of-current-approaches-sekcja-8.2-w-paperze-sa",
     "title": "RAW HTML CONTENT",
     "section": "Limitations of Current Approaches (sekcja 8.2 w paperze) SA",
-    "text": "Limitations of Current Approaches (sekcja 8.2 w paperze) SA\n\nWithout mentioning papers - obecne podejścia są niestabilne - mamy idealny balancing token -&gt; expert\nwith training stability, management of expert load (how many tokens are routed to each expert) that lead to time overheads, mode collapse (all tokens routed to a small portion of the expert set), leaving some tokens unprocessed, problems with expert exploration and specialization/redundancy, low performance of discrete operations on accelerators and finally communication costs in parallel training."
+    "text": "Limitations of Current Approaches (sekcja 8.2 w paperze) SA\n\nWithout mentioning papers - obecne podejścia są niestabilne - mamy idealny balancing token -&gt; expert\nwith training stability, management of expert load (how many tokens are routed to each expert) that lead to time overheads, mode collapse (all tokens routed to a small portion of the expert set), leaving some tokens unprocessed, problems with expert exploration and specialization/redundancy, low performance of discrete operations on accelerators and finally communication costs in parallel training.~~ […old text]"
   },
   {
     "objectID": "posts/mixture_of_tokens/diagrams/general1.html",
@@ -257,5 +257,12 @@
     "title": "RAW HTML CONTENT",
     "section": "Do not forget about a BERT",
     "text": "Do not forget about a BERT\nAs our results in this post covers only GPT model, in future work we plan to compare results of MoT on BERT model."
+  },
+  {
+    "objectID": "posts/mixture_of_tokens/index.html#scaling-large-language-models",
+    "href": "posts/mixture_of_tokens/index.html#scaling-large-language-models",
+    "title": "RAW HTML CONTENT",
+    "section": "Scaling Large Language Models",
+    "text": "Scaling Large Language Models\nNumerous works (Kaplan et al. 2020; Hoffmann et al. 2022) have studied benefits of increasing the size of language models for their performance. However, this scaling comes at a very high computational cost (Strubell, Ganesh, and McCallum 2019). Therefore, efficient use of computational resources and network parameters is often recognized as one of the most important challenges in the area (Rae et al. 2022; Jaszczur et al. 2021; Nawrot et al. 2022).\n[old text below] Existing (MoE)Mixture of Experts~~ approaches have demonstrated very impressive results in training huge models for language (Switch?), vision (moe_vision?) and more (moe_multimodal?). The core idea is to replace the standard FeedForward layer from the FeedForward layer standard for Transformer architectures with a set of experts, usually also MLPs, and have each token to be processed by a subset of experts.\nThe increased model size, despite keeping computational cost during training and inference constant, leads to significant performance improvements, and has been shown to behave predictably with respect to parameter count and inference compute [scaling moe], similarly to the standard dense Transformer models [scaling,chinchilla]. However, following the success of those initial huge parameter-count models, thorough analysis of the model training and inference schemes uncovered that using Mixture of Experts techniques brings about an entirely new suite of challenges.\n## Background## Mixture of Experts: A Quick Recap In recent years, there has been a growing interest in methods of increasing the number of parameters in neural networks while maintaining their computational demands. A major advance in eliminating some problems with traditional MoE approaches is Expert Choice (here biblio). Our work has been inspired by their approach - MoT can be seen as an Expert Choice (as opposed to Token Choice) kind of method.\nThere is also concurrent work (Softmoe) investigating ideas similar to ours in the vision domain. It is, however, limited to encoder-only models. It is worth noting that earlier, other fully-differentiable MoE approaches had been proposed (biblio copied from Softmoe). /* jakoś inaczej sformułowac: However, expert-mixing strategies presented in those works incur significant computational overhead. Also, they are token choice instead of expert choice, so different than us. */"
   }
 ]
