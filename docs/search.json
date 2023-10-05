@@ -163,7 +163,7 @@
   {
     "objectID": "posts/mixture_of_tokens/index.html",
     "href": "posts/mixture_of_tokens/index.html",
-    "title": "RAW HTML CONTENT",
+    "title": "Mixture of Tokens",
     "section": "",
     "text": "new textold text\nnew textold text\nnew textold text\nnew textold text\nnew textold text\nnew textold text\nnew textold text\nnew textold text"
   },
@@ -179,7 +179,7 @@
     "href": "posts/mixture_of_tokens/index.html#limitations-of-current-approaches-sekcja-8.2-w-paperze-sa",
     "title": "RAW HTML CONTENT",
     "section": "Limitations of Current Approaches (sekcja 8.2 w paperze) SA",
-    "text": "Limitations of Current Approaches (sekcja 8.2 w paperze) SA\n\nWithout mentioning papers - obecne podejścia są niestabilne - mamy idealny balancing token -&gt; expert\nwith training stability, management of expert load (how many tokens are routed to each expert) that lead to time overheads, mode collapse (all tokens routed to a small portion of the expert set), leaving some tokens unprocessed, problems with expert exploration and specialization/redundancy, low performance of discrete operations on accelerators and finally communication costs in parallel training.~~ […old text]"
+    "text": "Limitations of Current Approaches (sekcja 8.2 w paperze) SA"
   },
   {
     "objectID": "posts/mixture_of_tokens/diagrams/general1.html",
@@ -221,19 +221,19 @@
     "href": "posts/mixture_of_tokens/index.html#encoder-vs-decoder",
     "title": "RAW HTML CONTENT",
     "section": "Encoder vs Decoder",
-    "text": "Encoder vs Decoder\nIn encoder-only models, each token may attend to the whole input sequence, whereas decoder-only models only allow attending to the tokens that came before a particular token to simulate the autoregressive decoding used during model inference. This is crucial for the training of decoder-only models, as allowing a token to attend to future tokens would constitute a data leak, preventing successful training. A major problem potentially facing any token-mixing strategy is the possibility of a data leak, making the strategy inappropriate for use with decoder-only models. In MoT, the tokens are mixed across batch, i.e. with other tokens at the same position in other samples in the same training batch. We don’t consider other strategies which would be more suitable in the context of encoders."
+    "text": "Encoder vs Decoder\nIn encoder-only models, ach token may attend to the whole input sequence, whereas decoder-only models only allow attending to the tokens that came before a particular token to simulate the autoregressive decoding used during model inference. This is crucial for the training of decoder-only models, as allowing a token to attend to future tokens would constitute a data leak, preventing successful training. A major problem potentially facing any token-mixing strategy is the possibility of a data leak, making the strategy inappropriate for use with decoder-only models. In MoT, the tokens are mixed across batch, i.e. with other tokens at the same position in other samples in the same training batch. We don’t consider other strategies which would be more suitable in the context of encoders. –&gt;"
   },
   {
     "objectID": "posts/mixture_of_tokens/index.html#experimental-setup",
     "href": "posts/mixture_of_tokens/index.html#experimental-setup",
-    "title": "RAW HTML CONTENT",
+    "title": "Mixture of Tokens",
     "section": "Experimental setup",
-    "text": "Experimental setup\nIn our experiments we train the models for \\(250{,}000\\) steps using a cosine LR scheduler with \\(2500\\) steps of warmup, and final LR equal to \\(0.1\\) of the peak LR. The context length is \\(256\\) tokens and the batch size is \\(256\\). We tune the max LR separately for each model."
+    "text": "Experimental setup\nWe train a standard GPT-like model on the language modeling task using cross entropy loss on the C4 dataset (Raffel et al. 2019). The size of the dataset is big enough so that we never sample the same example twice.\nFor POC experiments, we chose model size identical to BERT-mini:\n\n\n\n\n\n\nModel\n\n\n\n\n4 layers\n256 embedding dimension\n1024 hidden dimension\n4 attention heads\n\n\n\n\n\n\n\n\n\nTraining:\n\n\n\n\n250K training steps\n256 context length\n256 batch size\nlr warmup for the first 1% of training\ncosine scheduling to 0.1 of peak lr at the end of training\n\n\n\nThe learning rate was tuned separately for both our model and the baseline:\n\n\n\n\n\n\nLearning Rate:\n\n\n\n\nDense baseline: 4e-3\nMixture of Tokens: 2e-3\n\n\n\nOur model trains on group size of 32, with 32x more parameters in the FeedForward layer compared to the baseline, distributed among 512 experts."
   },
   {
     "objectID": "posts/mixture_of_tokens/index.html#co-tam-dalej",
     "href": "posts/mixture_of_tokens/index.html#co-tam-dalej",
-    "title": "RAW HTML CONTENT",
+    "title": "Mixture of Tokens",
     "section": "Co tam dalej",
     "text": "Co tam dalej\nContMoE vs dense vs expert choice (GPT-BERT mini) Each run was optimized for that many batches of given size Contmoe is better than dense"
   },
@@ -242,7 +242,7 @@
     "href": "posts/mixture_of_tokens/index.html#temperature-annealing",
     "title": "RAW HTML CONTENT",
     "section": "Temperature annealing",
-    "text": "Temperature annealing\nIn base MoT setup tokens from various samples in the batch are mingled. This theoretically opens doors for being able to tease out the output of one batch sample by another. However, this may pave the way for potential issues.\nTo tackle this problem, we plan to conduct an experiment wherefinal phase will involve a strategic, gradual reduction of temperature, while simultaneously maintaining a low loss - a process referred to as ‘temerature annealing’. The anticipated outcome is a discrete-routing model which promotes inference parallelization - a move expected to significantly boost the overall efficiency of our processes."
+    "text": "Temperature annealing\nIn base MoT setup tokens from various samples in the batch are mixed. This theoretically opens doors for being able to tease out the output of one batch sample by another. However, this may pave the way for potential issues. [TODO Simon: Dodać wykresik, że temperatura się sama wygasza; Napisać że brak miksowania między sekwencjami jest dobry dla industry]\nTo tackle this problem, we plan to conduct an experiment where final phase will involve a strategic, gradual reduction of temperature, while simultaneously maintaining a low loss - a process referred to as temerature annealing. The anticipated outcome is a discrete-routing model which promotes inference parallelization - a move expected to significantly boost the overall efficiency of our processes."
   },
   {
     "objectID": "posts/mixture_of_tokens/index.html#scaling-up-models",
@@ -264,5 +264,68 @@
     "title": "RAW HTML CONTENT",
     "section": "Scaling Large Language Models",
     "text": "Scaling Large Language Models\nNumerous works (Kaplan et al. 2020; Hoffmann et al. 2022) have studied benefits of increasing the size of language models for their performance. However, this scaling comes at a very high computational cost (Strubell, Ganesh, and McCallum 2019). Therefore, efficient use of computational resources and network parameters is often recognized as one of the most important challenges in the area (Rae et al. 2022; Jaszczur et al. 2021; Nawrot et al. 2022).\n[old text below] Existing (MoE)Mixture of Experts~~ approaches have demonstrated very impressive results in training huge models for language (Switch?), vision (moe_vision?) and more (moe_multimodal?). The core idea is to replace the standard FeedForward layer from the FeedForward layer standard for Transformer architectures with a set of experts, usually also MLPs, and have each token to be processed by a subset of experts.\nThe increased model size, despite keeping computational cost during training and inference constant, leads to significant performance improvements, and has been shown to behave predictably with respect to parameter count and inference compute [scaling moe], similarly to the standard dense Transformer models [scaling,chinchilla]. However, following the success of those initial huge parameter-count models, thorough analysis of the model training and inference schemes uncovered that using Mixture of Experts techniques brings about an entirely new suite of challenges.\n## Background## Mixture of Experts: A Quick Recap In recent years, there has been a growing interest in methods of increasing the number of parameters in neural networks while maintaining their computational demands. A major advance in eliminating some problems with traditional MoE approaches is Expert Choice (here biblio). Our work has been inspired by their approach - MoT can be seen as an Expert Choice (as opposed to Token Choice) kind of method.\nThere is also concurrent work (Softmoe) investigating ideas similar to ours in the vision domain. It is, however, limited to encoder-only models. It is worth noting that earlier, other fully-differentiable MoE approaches had been proposed (biblio copied from Softmoe). /* jakoś inaczej sformułowac: However, expert-mixing strategies presented in those works incur significant computational overhead. Also, they are token choice instead of expert choice, so different than us. */"
+  },
+  {
+    "objectID": "posts/mixture_of_tokens/index.html#background",
+    "href": "posts/mixture_of_tokens/index.html#background",
+    "title": "RAW HTML CONTENT",
+    "section": "Background",
+    "text": "Background\nIn recent years, there has been a growing interest in methods of increasing the number of parameters in neural networks while maintaining their computational demands. A major advance in eliminating some problems with traditional MoE approaches is Expert Choice (here biblio). Our work has been inspired by their approach - MoT can be seen as an Expert Choice (as opposed to Token Choice) kind of method.\nThere is also concurrent work (Softmoe) investigating ideas similar to ours in the vision domain. It is, however, limited to encoder-only models. It is worth noting that earlier, other fully-differentiable MoE approaches had been proposed (biblio copied from Softmoe). /* jakoś inaczej sformułowac: However, expert-mixing strategies presented in those works incur significant computational overhead. Also, they are token choice instead of expert choice, so different than us. */"
+  },
+  {
+    "objectID": "posts/mixture_of_tokens/index.html#results",
+    "href": "posts/mixture_of_tokens/index.html#results",
+    "title": "Mixture of Tokens",
+    "section": "Results",
+    "text": "Results\n\n\n\n\n                                                    \n\n\nOur Mixture of Tokens model attains the dense models’ final training loss in just 24% of steps.\n\n\n\n\n                                                    \n\n\nIf we measure actual training time, the final dense model loss is achieved in only 33% of time."
+  },
+  {
+    "objectID": "posts/mixture_of_tokens/index.html#scaling-up",
+    "href": "posts/mixture_of_tokens/index.html#scaling-up",
+    "title": "Mixture of Tokens",
+    "section": "Scaling Up",
+    "text": "Scaling Up\nIn a previous section  we showcased results for a BERT-mini FLOP matched MoT. Our preliminary experiments are also suggesting promising outcomes for larger models. In upcoming weeks we aim to prepare comprehensive comparison of larger models with FLOP matched MoT models."
+  },
+  {
+    "objectID": "posts/mixture_of_tokens/index.html#discretization",
+    "href": "posts/mixture_of_tokens/index.html#discretization",
+    "title": "Mixture of Tokens",
+    "section": "Discretization",
+    "text": "Discretization"
+  },
+  {
+    "objectID": "posts/mixture_of_tokens/index.html#code-optimisation",
+    "href": "posts/mixture_of_tokens/index.html#code-optimisation",
+    "title": "RAW HTML CONTENT",
+    "section": "Code optimisation:",
+    "text": "Code optimisation:\nWe believe that our implementation\n:::"
+  },
+  {
+    "objectID": "posts/mixture_of_tokens/index.html#section",
+    "href": "posts/mixture_of_tokens/index.html#section",
+    "title": "RAW HTML CONTENT",
+    "section": "",
+    "text": "6"
+  },
+  {
+    "objectID": "posts/mixture_of_tokens/index.html#scaling-language-models",
+    "href": "posts/mixture_of_tokens/index.html#scaling-language-models",
+    "title": "Mixture of Tokens",
+    "section": "Scaling Language Models",
+    "text": "Scaling Language Models\nNumerous works (Kaplan et al. 2020; Hoffmann et al. 2022) have studied benefits of increasing the size of language models for their performance. However, this scaling comes at a very high computational cost (Strubell, Ganesh, and McCallum 2019). Therefore, efficient use of computational resources and network parameters is often recognized as one of the most important challenges in the area (Rae et al. 2022; Jaszczur et al. 2021; Nawrot et al. 2022). One of the most promising research directions in this area is conditional computation, meaning methods that involve activating only a subset of parameters for a given input. In the context of language models, this idea has been most successfully implemented in Mixture of Experts (MoE), leading to huge increases in the quality of model performance."
+  },
+  {
+    "objectID": "posts/mixture_of_tokens/index.html#mixture-of-experts",
+    "href": "posts/mixture_of_tokens/index.html#mixture-of-experts",
+    "title": "Mixture of Tokens",
+    "section": "Mixture of Experts",
+    "text": "Mixture of Experts\nThe core idea in MoE is to increase model size without incurring additional computational costs. Roughly speaking, is is done by replacing the FeedForward layer standard for Transformer architectures with a (potentially very large) set of experts. In this new setup, a given token is processed only by a small subset of experts, and that choice is decided by a small network called a controller or router. The change in model quality due to this increase in model size has been shown to behave predictably with respect to parameter count and inference compute (Clark et al. 2022). More detailed backgorund and explanation of variants of the MoE architecture is presented in the next section."
+  },
+  {
+    "objectID": "posts/mixture_of_tokens/index.html#limitations-of-current-approaches",
+    "href": "posts/mixture_of_tokens/index.html#limitations-of-current-approaches",
+    "title": "Mixture of Tokens",
+    "section": "Limitations of current approaches",
+    "text": "Limitations of current approaches\nDespite many promising results, wider adoption of Mixture has been limited by a number of restrictions of the architecture. and difficulties in the training. Among these, the most important are:\n\nTraining insability. Numerous works (Fedus, Zoph, and Shazeer 2022; Du et al. 2022) have reported difficulties in training MoE due to frequent instabilities. This is most likely connected with the discrete nature of the technique: the operation of choosing top-k most relevant tokens/experts in non-differentiable. To train the network using gradient descent, there is a need for tricks to imitate the gradient, which come at the cost of the worse quality of trainingWe hypothesise that various techniques used for training the cotnroller with gradient descent result in lower training stability.\nLoad imbalance. Typically, in MoE we set the maximum capacity of each expert. However, we are not able to efficiently restrict the choice of the routing network to assign tokens in a perfectly balanced way. This leads to token droping (when some tokens are not processed at all) and expert under-specialization (when some experts receive less data and are therefore not trained enough). there is work by Basil that does some balancing for that. Will liink later\nInformation leak. Some of the most successfull methods in the area process tokens from different positions in a sequence together (i. e. by comparing scores of all tokens in a batch). This imposes information leak, and makes it impossible to use such techniques in autoregressive decoding, covering a large part of use cases in modern language models. \n\nWe want to address these problems using our techique."
   }
 ]

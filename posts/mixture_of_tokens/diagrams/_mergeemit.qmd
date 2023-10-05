@@ -1,11 +1,3 @@
-
----
-title: "RAW HTML CONTENT"
-format: html
-css: bootstrap.min.css
----
-
-
 ```{=html}
 <iframe frameborder="0" style="width:100%;height:593px;" src="https://viewer.diagrams.net/?tags=%7B%7D&highlight=0000ff&edit=_blank&layers=1&nav=1&page-id=C2AunCsj_dl_T9ErqCql&title=Untitled%20Diagram.drawio#Uhttps%3A%2F%2Fdrive.google.com%2Fuc%3Fid%3D1jvew0ft43zpaG-iCk7Ob2ilJw7VjsyeZ%26export%3Ddownload"></iframe>
 ```

@@ -5,3 +5,7 @@
     font-size: small;
     text-align: right;
 }
+
+h2 {
+    border-bottom: 0px;
+}

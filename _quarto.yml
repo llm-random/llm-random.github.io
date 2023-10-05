@@ -4,6 +4,8 @@ project:
   
 website:
   title: "llm-random"
+  google-analytics: G-QHXJCKXK7M
+    
   navbar:
     right:
       - about.qmd
@@ -15,6 +17,3 @@ format:
   html:
     theme: cosmo
     css: styles.css
-
-
-
