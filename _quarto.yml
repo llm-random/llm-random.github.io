@@ -4,6 +4,7 @@ project:
   
 website:
   title: "llm-random"
+  google-analytics: G-QHXJCKXK7M
   navbar:
     right:
       - about.qmd
