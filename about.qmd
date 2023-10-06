@@ -1,8 +1,8 @@
 ---
 title: "About"
 image: profile.jpg
-about:
-  template: jolla
+  # about:
+    # template: jolla
 #   links:
 #     - icon: twitter
 #       text: Twitter
@@ -12,8 +12,18 @@ about:
 #       href: https://linkedin.com
 #     - icon: github
 #       text: Github
-#       href: https://github.com
-
+#       href: https://github.com=
 ---
 
+Blog of LLM-Random research group, centered in IDEAS NCBR, started in mid-2022 by Sebastian Jaszczur. Members, in the order of joining, listed below.
 
+* Sebastian Jaszczur
+* Marek Cygan (as advisor)
+* Jakub Krajewski
+* Szymon Antoniak
+* Maciej Pióro
+* Tomasz Odrzygóźdź
+* Jan Ludziejewski
+* Michał Krutul
+
+Public repositories of the group are available at [LLM-Random](https://github.com/llm-random/) organization on GitHub.

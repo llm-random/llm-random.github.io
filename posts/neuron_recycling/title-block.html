@@ -1,45 +1,60 @@
 <!-- Taken from https://github.com/quarto-dev/quarto-cli/blob/a5a81f5d2afa2664f8748ac9ae5e70b4a0a2baf7/src/resources/formats/html/templates/banner/title-block.html -->
 
-<header id="title-block-header" class="quarto-title-block default$if(quarto-template-params.banner-header-class)$ $quarto-template-params.banner-header-class$$endif$">
+<header id="title-block-header"
+  class="quarto-title-block default$if(quarto-template-params.banner-header-class)$ $quarto-template-params.banner-header-class$$endif$">
   <style>
     .equal-contribution {
-    padding: 10px;
-    margin: 10px 0px;
-    font-size: small;
-    text-align: right;
-}
+      padding: 10px;
+      margin: 10px 0px;
+      font-size: small;
+      text-align: right;
+    }
+
+    .MK {
+      color: yellow;
+    }
   </style>
-    <div class="quarto-title-banner">
-      <div class="quarto-title column-body">
-        $if(title)$<h1 class="title">$title$</h1>$endif$
-        $if(subtitle)$
-        <p class="subtitle lead">$subtitle$</p>
-        $endif$
-        $if(description)$
-        <div>
-          <div class="description">
-            $description$
-          </div>
+  <div class="quarto-title-banner">
+    <div class="quarto-title column-body">
+      $if(title)$<h1 class="title">$title$</h1>$endif$
+      $if(subtitle)$
+      <p class="subtitle lead">$subtitle$</p>
+      $endif$
+      $if(description)$
+      <div>
+        <div class="description">
+          $description$
         </div>
-        $endif$
-        $if(categories)$
-          $if(quarto-template-params.title-block-categories)$
-        <div class="quarto-categories">
-          $for(categories)$
-          <div class="quarto-category">$categories$</div>
-          $endfor$
-        </div>
-          $endif$
-        $endif$
       </div>
+      $endif$
+      $if(categories)$
+      $if(quarto-template-params.title-block-categories)$
+      <div class="quarto-categories">
+        $for(categories)$
+        <div class="quarto-category">$categories$</div>
+        $endfor$
+      </div>
+      $endif$
+      $endif$
     </div>
-      
-    $title-metadata.html()$
-    
-    <div class='equal-contribution'> 
-      * equal contribution
-      <br/> † initial idea and project supervision 
-      <br/> ‡ research direction and high-level supervision
-    </div>
+  </div>
+
+  $title-metadata.html()$
+
+  <div class='equal-contribution'>
+    * equal contribution
+    <br /> † initial idea and project supervision
+    <br /> ‡ research direction and high-level supervision
+  </div>
+
+  <script>
+    function replaceTextWithYellowColor() {
+      var elements = document.getElementsByClassName("MK");
+
+      for (var i = 0; i < elements.length; i++) {
+        elements[i].style.color = "yellow";
+      }
+    }
+  </script>
 
 </header>
