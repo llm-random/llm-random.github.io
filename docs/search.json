@@ -18,7 +18,7 @@
     "href": "index.html",
     "title": "llm-random",
     "section": "",
-    "text": "Mixture of Tokens\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nOct 6, 2023\n\n\nSzymon Antoniak *, Michał Krutul, Maciej Pióro, Jakub Krajewski, Jan Ludziejewski, Tomasz Odrzygóźdź, Marek Cygan ‡, Sebastian Jaszczur †\n\n\n\n\n\n\n  \n\n\n\n\nNeuron Recycling\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nJul 11, 2023\n\n\nJakub Krajewski *, Maciej Pióro *, Sebastian Jaszczur †, Marek Cygan ‡\n\n\n\n\n\n\nNo matching items"
+    "text": "Mixture of Tokens\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nOct 6, 2023\n\n\nSzymon Antoniak , Sebastian Jaszczur †, Michał Krutul, Maciej Pióro, Jakub Krajewski, Jan Ludziejewski, Tomasz Odrzygóźdź, Marek Cygan ‡\n\n\n\n\n\n\n  \n\n\n\n\nNeuron Recycling\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nJul 11, 2023\n\n\nJakub Krajewski *, Maciej Pióro *, Sebastian Jaszczur †, Marek Cygan ‡\n\n\n\n\n\n\nNo matching items"
   },
   {
     "objectID": "get-started.html",
@@ -163,9 +163,9 @@
   {
     "objectID": "posts/mixture_of_tokens/index.html",
     "href": "posts/mixture_of_tokens/index.html",
-    "title": "RAW HTML CONTENT",
+    "title": "Mixture of Tokens",
     "section": "",
-    "text": "new textold text\nnew textold text\nnew textold text\nnew textold text\nnew textold text\nnew textold text\nnew textold text\nnew textold text"
+    "text": "GENERAL TODOS: grammarly, go over and rephrase, align and make clearer the Methods section, make mail, tweet, settle on contribution attributions,\nzastanowić się nad kolejnością autorów, głównie SJ"
   },
   {
     "objectID": "posts/mixture_of_tokens/index.html#scaling-model-size-with-mixture-of-experts",
@@ -226,9 +226,9 @@
   {
     "objectID": "posts/mixture_of_tokens/index.html#experimental-setup",
     "href": "posts/mixture_of_tokens/index.html#experimental-setup",
-    "title": "RAW HTML CONTENT",
+    "title": "Mixture of Tokens",
     "section": "Experimental setup",
-    "text": "Experimental setup\nWe train a standard GPT-like model on the language modeling task using cross entropy loss on the C4 dataset (Raffel et al. 2019).\nFor proof-of-concept experiments, we chose model size identical to BERT-mini:\n\n\n\n\n\n\nModel Hyperparameters\n\n\n\n\n4 layers\n256 embedding dimension\n1024 hidden dimension\n4 attention heads\n\n\n\n\n\n\n\n\n\nTraining Setup\n\n\n\n\n250K training steps\n256 context length\n256 batch size\nlr warmup for the first 1% of training\ncosine scheduling to 0.1 of peak lr at the end of training\n\n\n\nThe learning rate was tuned separately for both our model and the baseline:\n\n\n\n\n\n\nLearning Rate\n\n\n\n\nDense baseline: 4e-3\nMixture of Tokens: 2e-3\n\n\n\nOur model trains on group size of 32, with 32x more parameters in the FeedForward layer compared to the baseline, distributed among 512 experts per layer. SA TODO rephrase"
+    "text": "Experimental setup\nFor the baseline, we train a standard GPT-like model on the language modeling task using cross entropy loss on the C4 dataset (Raffel et al. 2019). Our model replaces all feed-forward layers with MoT layers.\nFor proof-of-concept experiments, we chose model size identical to BERT-mini:\n\n\n\n\n\n\nModel Hyperparameters\n\n\n\n\n4 layers\n256 embedding dimension\n1024 hidden dimension\n4 attention heads\n\n\n\n\n\n\n\n\n\nTraining Setup\n\n\n\n\n250K training steps\n256 context length\n256 batch size\nlr warmup for the first 1% of training\ncosine scheduling to 0.1 of peak lr at the end of training\n\n\n\n\n\n\n\n\n\nMixture of Tokens hyperparameters\n\n\n\n\n32 group size\n512 experts\n32x more parameters than a dense feed-forward layer\n\n\n\nThe learning rate was tuned separately for both our model and the baseline:\n\n\n\n\n\n\nLearning Rate\n\n\n\n\nDense baseline: 4e-3\nMixture of Tokens: 2e-3"
   },
   {
     "objectID": "posts/mixture_of_tokens/index.html#co-tam-dalej",
@@ -275,16 +275,16 @@
   {
     "objectID": "posts/mixture_of_tokens/index.html#results",
     "href": "posts/mixture_of_tokens/index.html#results",
-    "title": "RAW HTML CONTENT",
+    "title": "Mixture of Tokens",
     "section": "Results",
     "text": "Results\n\n\n\n\n                                                    \n\n\nOur Mixture of Tokens model attains the dense models’ final training loss in just 24% of steps. update plot SA after training finished ZTODO zmienić 24% of traning steps na czarny kolor i tę kreseczkę też, przerywana linia też w innym kolorze\n\n\n\n\n                                                    \n\n\nIf we measure actual training time, the final dense model loss is achieved in only 33% of time. update plot SA after training finished ZTODO zmienić 33% of traning steps na czarny kolor i tę kreseczkę też, przerywana linia też w innym kolorze"
   },
   {
     "objectID": "posts/mixture_of_tokens/index.html#scaling-up",
     "href": "posts/mixture_of_tokens/index.html#scaling-up",
-    "title": "RAW HTML CONTENT",
+    "title": "Mixture of Tokens",
     "section": "Scaling Up",
-    "text": "Scaling Up\nIn a previous section  we showcased results for a BERT-mini FLOP matched Mixture of Tokens. Our preliminary experiments are also suggesting even better outcomes for larger models. In upcoming weeks we aim to prepare comprehensive comparison of larger models with FLOP matched Mixture of Tokens models. [TODO SJ do przepisania] {.SJ}"
+    "text": "Scaling Up\nOur preliminary experiments suggest that Mixture of Tokens might work even better for larger model sizes. In upcoming weeks we aim to prepare comprehensive comparison of larger models and compare them to Mixture of Experts methods."
   },
   {
     "objectID": "posts/mixture_of_tokens/index.html#discretization",
@@ -310,23 +310,23 @@
   {
     "objectID": "posts/mixture_of_tokens/index.html#scaling-language-models",
     "href": "posts/mixture_of_tokens/index.html#scaling-language-models",
-    "title": "RAW HTML CONTENT",
+    "title": "Mixture of Tokens",
     "section": "Scaling Language Models",
     "text": "Scaling Language Models\nNumerous TODO SA poprawia works (Kaplan et al. 2020; Hoffmann et al. 2022) have studied benefits of increasing the size of language models for their performance. However, this scaling comes at a very high computational cost (Strubell, Ganesh, and McCallum 2019). Therefore, efficient use of computational resources and network parameters is often recognized as one of the most important challenges in the area TODO moze lepsze słowo tutaj SA (Rae et al. 2022; Jaszczur et al. 2021; Nawrot et al. 2022). One of the most promising research directions in this domain is conditional computation, meaning methods that involve activating only a subset of parameters for a given input. In the context of language models, this idea has been most successfully implemented in MoE, leading to huge increases in model performance."
   },
   {
     "objectID": "posts/mixture_of_tokens/index.html#mixture-of-experts",
     "href": "posts/mixture_of_tokens/index.html#mixture-of-experts",
-    "title": "RAW HTML CONTENT",
+    "title": "Mixture of Tokens",
     "section": "Mixture of Experts",
-    "text": "Mixture of Experts\nThe core idea in MoE is to increase model size without incurring additional computational costs. Roughly speaking, it is done by replacing the FeedForward layer standard for Transformer architectures with a (potentially very large) set of experts. In this new setup, a given token is processed only by a small subset of experts, and that selection is made by a small network called a controller (sometimes called a router). The change in model quality due to this increase in model size has been shown to behave predictably with respect to parameter count and inference compute (Clark et al. 2022). More detailed background and explanation of variants of the MoE architecture is presented in Background."
+    "text": "Mixture of Experts\nThe core idea in MoE is to increase model size without incurring additional computational costs. Roughly speaking, it is done by replacing the feed-forward layer standard for Transformer architectures with a (potentially very large) set of experts. In this new setup, a given token is processed only by a small subset of experts, and that selection is made by a small network called a controller (sometimes called a router). The change in model quality due to this increase in model size has been shown to behave predictably with respect to parameter count and inference compute (Clark et al. 2022). More detailed background and explanation of variants of the MoE architecture is presented in Background."
   },
   {
     "objectID": "posts/mixture_of_tokens/index.html#limitations-of-current-approaches",
     "href": "posts/mixture_of_tokens/index.html#limitations-of-current-approaches",
-    "title": "RAW HTML CONTENT",
+    "title": "Mixture of Tokens",
     "section": "Limitations of current approaches",
-    "text": "Limitations of current approaches\nDespite promising results, wider adoption of MoE has been limited by a number of restrictions of the architecture . and difficulties in the training. Among these, the most important are: przeppisać ten paragraf\n\nTraining instability. Numerous works (Fedus, Zoph, and Shazeer 2022; Du et al. 2022) have reported difficulties in training MoE models due to instabilities. This is most likely connected with the discrete nature of the technique: the operation of choosing top-k most relevant tokens/experts in non-differentiable.We hypothesise that existing techniques used for training the cotnroller with gradient descent result in lower training stability.\nLoad imbalance. Typically, in MoE we set the maximum capacity for each expert. However, we are not able to efficiently restrict the choice of the routing network to assign tokens in a perfectly balanced way. This leads to token dropping (when some tokens are not processed at all) and expert under-training mention underspecialization as well (when some experts receive less data and are therefore not trained enough). there is work by Basil that does some balancing for that. Will liink later\nInformation leak. Some of the most successful methods in the areasth else here process tokens from different positions in a sequence together (i.e. by comparing scores of all tokens in a batch). This imposes an information leak, and makes it impossible to use such techniques in autoregressive decodinghinders their utility in in autoregressive decoding remember that we leak in another way, so don’t be too harsh here, covering a large part of use cases in modern language models. SJ edit\n\nWe want to address these problems using our techique."
+    "text": "Limitations of current approaches\nDespite promising results, wider adoption of MoE has been limited by a number of restrictions of the architecture and difficulties in the training. Among these, the most important are: przeppisać ten paragraf\n\nTraining instability. Numerous works (Fedus, Zoph, and Shazeer 2022; Du et al. 2022) have reported difficulties in training MoE models due to instabilities. This is most likely connected with the discrete nature of the technique: the operation of choosing top-k most relevant tokens/experts in non-differentiable.We hypothesise that existing techniques used for training the cotnroller with gradient descent result in lower training stability.\nLoad imbalance. Typically, in MoE we set the maximum capacity for each expert. However, we are not able to efficiently restrict the choice of the routing network to assign tokens in a perfectly balanced way. This leads to token dropping (when some tokens are not processed at all) and expert under-training (when some experts receive less data and are therefore not trained enough). mention underspecialization as well: there is work by Basil that does some balancing for that. Will liink later\nInformation leak. Some of the most successful MoE methods process tokens from different positions in a sequence together (i.e. by comparing scores of all tokens in a batch). This imposes an information leak, and hinders their utility in autoregressive decoding. remember that we leak in another way, so don’t be too harsh here, covering a large part of use cases in modern language models. SJ edit, mention just industry applications"
   },
   {
     "objectID": "posts/mixture_of_tokens/index.html#limitations-of-current-approaches-ten-paragraph-jest-mocno-confusion",
@@ -345,8 +345,22 @@
   {
     "objectID": "posts/mixture_of_tokens/index.html#from-mixture-of-tokens-to-expert-choice",
     "href": "posts/mixture_of_tokens/index.html#from-mixture-of-tokens-to-expert-choice",
-    "title": "RAW HTML CONTENT",
+    "title": "Mixture of Tokens",
     "section": "From Mixture of Tokens to Expert-choice",
     "text": "From Mixture of Tokens to Expert-choice\nNapsiać że emprucznie wyszło, że w zasadzie to się nam to samo dyskretytuje i dzieki temu łatwo będzie pozbyć się leaka informacyjnego. Napisać o caveat’ach, ze pierwszy blog się nie dyskrezytuje ale pracujemy nad tym i dodamy potem"
+  },
+  {
+    "objectID": "posts/mixture_of_tokens/index.html#from-mixture-of-tokens-to-mix",
+    "href": "posts/mixture_of_tokens/index.html#from-mixture-of-tokens-to-mix",
+    "title": "Mixture of Tokens",
+    "section": "From Mixture of Tokens to Mix",
+    "text": "From Mixture of Tokens to Mix\nNapsiać że emprucznie wyszło, że w zasadzie to się nam to samo dyskretytuje i dzieki temu łatwo będzie pozbyć się leaka informacyjnego. Napisać o caveat’ach, ze pierwszy blog się nie dyskrezytuje ale pracujemy nad tym i dodamy potem"
+  },
+  {
+    "objectID": "posts/mixture_of_tokens/index.html#from-mixture-of-tokens-to-mixture-of-experts",
+    "href": "posts/mixture_of_tokens/index.html#from-mixture-of-tokens-to-mixture-of-experts",
+    "title": "Mixture of Tokens",
+    "section": "From Mixture of Tokens to Mixture of Experts",
+    "text": "From Mixture of Tokens to Mixture of Experts\nIn the default Mixture of Tokens setup for autoregressive training, tokens from different examples in the batch are mixed. This, in principle, opens a possibility of teasing out the output of one sample from another in the same batch - which might be undesirable in some use cases.\nTo quantify the rate of token mixing we investigated the evolution of the mean entropy of weights produced by Mixture of Tokens layers. In other words: in each layer, we average the entropy of weights over all token groups and all experts.\nFor the base version of MoT, the results are as follows:\n\n\n\n\n                                                    \n\n\n\n\n\n\n\n\nBackward Compatibility\n\n\n\nThe controller produces merging weights by taking a softmax over scores calculated independently for each token. If it should happen that one score would dominate, for example by having very low temperature, the mixing operation would focus on exclusively one token. This, in effect, would make Mixture of Tokens equivalent to Token-Choice architecture.\n\n\nAs it turns out, allowing the temperature to be learnable, we effectively allow the model to lower rate of token mixing, especially in later layers:\n\n\n\n\n                                                    \n\n\nInterestingly, this comes at a cost of model performance.\n\n\n\n\n                                                    \n\n\nThus, allowing the temperature to be learned near the end of training seems to be a very promising direction for “private” autoregressive decoding: this way, we retain all the benefits of training with a high rate of token mixing, and have very low rates during inference.\n# TODO: dodać uczalną temperaturę na koniec treningu (te eksperymenty już mamy)\nobrazki z różnymi temperaturami softmax"
   }
 ]
