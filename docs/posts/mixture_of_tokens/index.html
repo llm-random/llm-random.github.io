@@ -386,13 +386,14 @@ gtag('config', 'G-QHXJCKXK7M', { 'anonymize_ip': true});
 # Standardization 
 -  feed-forward 
 - American  -->
-<p><span class="SA">GENERAL TODOS: grammarly, go over and rephrase, align and make clearer the Methods section, make mail, tweet, settle on contribution attributions,</span></p>
-<p><span class="SJ">zastanowić się&nbsp;nad kolejnością autorów, głównie SJ</span></p>
 <section id="introduction" class="level1">
 <h1>Introduction</h1>
 <p>Mixture of Experts (MoE) architectures have recently garnerned considerable attention for their ability to increase the size of Transformer models while keeping the computational cost of training and inference constant. The most successful MoE approaches achieve this by activating only subsets of a very large feed forward layer for each processed token (the alternative subsets of parameters are often called <em>experts</em>).</p>
 <p>This technique comes at a cost, though: the operation of choosing the most suitable experts for a given token is discrete, and learning discrete choices is difficult; the models are known to suffer from issues including training instability and expert under- and overload. While some of those problems can be alleviated with e.g.&nbsp;the use of various auxiliary losses or reduced initialisation scale, it is certain that existing MoE techniques are more difficult and less intuitive to train than dense counterparts.</p>
 <p>Aiming to avoid these problems we propose <strong>Mixture of Tokens</strong>: a new, fully-differentiable type of architecture that retains all efficiency benefits of MoE and alleviates the aformentioned problems by <em>mixing tokens</em> before feeding them into the feed-forward layer instead of routing tokens to experts, in effect allowing the model to simultaneously learn from all token-expert combinations. Crucially, this technique is fully compatible with both masked and causal LLM training.</p>
+<p><span class="SA">GENERAL TODOS: grammarly, go over and rephrase, align and make clearer the Methods section, make mail, tweet, settle on contribution attributions,</span></p>
+<p><span class="SJ">zastanowić się&nbsp;nad kolejnością autorów, głównie SJ</span></p>
+<p><span class="SJ">jakiś fajniejszy opis tekstu nas tronce głównej dać. Można przez display:none’d div.</span></p>
 </section>
 <section id="motivation" class="level1">
 <h1>Motivation</h1>
