@@ -156,7 +156,7 @@ format:
 -  feed-forward 
 - American  -->
 
-[GENERAL TODOS: grammarly, go over and rephrase, align and make clearer the Methods section, make mail, tweet, settle on contribution attributions, ]{.SA}
+[GENERAL TODOS: grammarly, go over and rephrase, align and make clearer the Methods section, make mail, tweet, settle on contribution attributions,add Batch Priority Routing ]{.SA}
 
 [zastanowić się nad kolejnością autorów, głównie SJ]{.SJ}
 
@@ -169,31 +169,24 @@ Aiming to avoid these problems we propose **Mixture of Tokens**: a new, fully-di
 
 # Motivation 
 ## Scaling Language Models
-Numerous [TODO SA poprawia]{.SA} works [@kaplan2020scaling; @hoffmann2022training] have studied benefits of increasing the size of language models for their performance. However, this scaling comes at a very high computational cost [@strubell2019energy]. Therefore, efficient use of computational resources and network parameters is often recognized as one of the most important challenges in the area [TODO moze lepsze słowo tutaj SA]{.SA} [@rae2022scaling; @jaszczur2021sparse; @nawrot2022hierarchical]. One of the most promising research directions in this domain is conditional computation, meaning methods that involve activating only a subset of parameters for a given input. In the context of language models, this idea has been most successfully implemented in MoE, leading to huge increases in model performance.
- 
+Large language models based on Transformers currently make up one of the most active fields in ​​Artificial Intelligence, exhibiting human-level performance in a variety of tasks. This is in large part due to their scaling properties - [@kaplan2020scaling; @hoffmann2022training] showed that an increase in model size results in a predictable increase in performance. This scaling leads to an ever-growing demand for computational resources, with their effective utilization often deemed as one of the critical challenges of the field [@rae2022scaling; @jaszczur2021sparse; @nawrot2022hierarchical].
+
+
 ## Mixture of Experts
-The core idea in MoE is to increase model size without incurring additional computational costs. Roughly speaking, it is done by replacing the feed-forward layer standard for Transformer architectures with a (potentially very large) set of experts. In this new setup, a given token is processed only by a small subset of experts, and that selection is made by a small network called a *controller* (sometimes called a *router*). 
-The change in model quality due to this increase in model size has been shown to behave predictably with respect to parameter count and inference compute [@clark2022unified]. More detailed background and explanation of variants of the MoE architecture is presented in [Background](#sec-back).
+The core idea in MoE is to increase model size without incurring additional computational costs. Roughly speaking, it is done by replacing the feed-forward layer standard for Transformer architectures with a (potentially very large) set of experts. In this new setup, a given token is processed only by a small subset of experts, and that selection is made by a small network called a *controller*. [^1] 
+Increasing model size using MoE architectures has also been shown to scale with parameter count [@clark2022unified]. More detailed background and explanation of variants of the MoE architecture is presented in [Background](#sec-back).
+
+[^1]: *router* is also commonly used in MoE literature.
 
 
 ## Limitations of current approaches 
-Despite promising results, wider adoption of MoE has been limited by a number of restrictions of the architecture and difficulties in the training. Among these, the most important are: 
-[przeppisać ten paragraf]{.SA}
+While the performance of the huge-parameter-count MoE architectures is impressive, they come with an entirely new set of challenges, during both training and inference. The most notable include:
 
-* **Training instability.** Numerous works [@fedus2022switch; @du2022glam] have reported difficulties in training MoE models due to instabilities. This is most likely connected with the discrete nature of the technique: the operation of choosing top-k most relevant tokens/experts in non-differentiable.We hypothesise that existing techniques used for training the cotnroller with gradient descent result in lower training stability.
-* **Load imbalance.** Typically, in MoE we set the maximum *capacity* for each expert. However, we are not able to efficiently restrict the choice of the routing network to assign tokens in a perfectly balanced way. This leads to *token dropping* (when some tokens are not processed at all) and *expert under-training* (when some experts receive less data and are therefore not trained enough). [mention underspecialization as well: ]{.SJ} [there is work by Basil that does some balancing for that. Will liink later]{.SA}
-* **Information leak.** Some of the most successful MoE methods process tokens from different positions in a sequence together (i.e. by comparing scores of all tokens in a batch). This imposes an information leak, and hinders their utility in autoregressive decoding. [remember that we leak in another way, so don't be too harsh here, covering a large part of use cases in modern language models.]{.SA} [SJ edit, mention just industry applications]{.SJ}<!--[SIMON ANOTHER LINK!!!!!!]-->
+* **Training instability.** Multiple studies [@fedus2022switch; @du2022glam; @limoe] have reported difficulties in training MoE models due to instabilities. This is likely due to with the nature of the technique: the operation of choosing top-k most relevant tokens/experts in discrete, and thus small changes of controller weights can have disproportional effects on controller decisions. We hypothesise that existing techniques used for training the cotnroller with gradient descent, while somewhat effective, do not entirely solve this problem.
 
+* **Load imbalance.** Typically, in MoE we set the maximum *capacity* for each expert. However, we are not able to efficiently restrict the choice of the routing network to assign tokens in a perfectly balanced way. This leads to *token dropping* (when some tokens are not processed by an expert) and *mode collapse* (when the cotroller sends almost all tokens to a few experts) [@The Sparsely-Gated Mixture-of-Experts Layer].
 
-<!-- We want to address these problems using our techique, Mixture of Tokens. -->
-<!-- JK - tu można dorzucić nierówne traktowanie przykładów (niektóre przykłądy dostają więcej compute). Można też dać, ze niektóre techniki nie proponują rozwiązania, które byłoby użyteczne dla generative decoding, ale trzeba by dać related work powyżej -->
-
-<!-- JK - byłoby bardziej logicze dać tę sekcję pod related work -->
-<!--Without mentioning papers 
-- obecne podejścia są niestabilne
-- mamy idealny balancing token -> expert
-
-with training stability, management of expert _load_ (how many tokens are routed to each expert) that lead to time overheads, mode collapse (all tokens routed to a small portion of the expert set), leaving some tokens unprocessed, problems with expert exploration and specialization/redundancy, low performance of discrete operations on accelerators and finally communication costs in parallel training.-->
+* **Information leak.** Some of the most successful MoE methods process tokens from different positions in a sequence together (i.e. by comparing scores of all tokens in a batch). This imposes an information leak, and hinders their utility in autoregressive decoding. 
 
 
 # Background {#sec-back}
@@ -214,25 +207,9 @@ Concurrently to our work, [@puigcerver2023sparse] proposed a continuous variant 
 
 
 
-<!-- JK- czy były inne soft wersje moe? -->
-
-<!-- [This needs to be quite comprehensive, what we see below unnecessarily focuses on Expert Choice and Softmoe]{.SA}
-In recent years, there has been a growing interest in methods of increasing the number of parameters in neural networks while maintaining their computational demands. A major advance in eliminating some problems with traditional MoE approaches is Expert Choice (here biblio). Our work has been inspired by their approach - Mixture of Tokens can be seen as an Expert Choice (as opposed to *Token Choice*) kind of method.
-
-There is also concurrent work (Softmoe) nvestigating ideas similar to ours in the vision domain. It is, however, limited to encoder-only models. It is worth noting that earlier, other fully-differentiable MoE approaches had been proposed (biblio copied from Softmoe). /* jakoś inaczej sformułowac: However, expert-mixing strategies presented in those works incur significant computational overhead. Also, they are token choice instead of expert choice, so different than us. */ -->
-
-
 # Method
-<!-- In this section we provide an overview of our proposed method. More detailed description of all operations can be found in the next section. [T U T A J L I N K]{.SA} -->
 
 [Link to diagrams: https://drive.google.com/file/d/1jvew0ft43zpaG-iCk7Ob2ilJw7VjsyeZ/view?usp=sharing ]{.SJ}
-<!-- 
-[Move this paragraph to background]{.SJ}
-The general idea of Mixture of Tokens is to run multiple experts which independently aggregate and process tokens. The most common (and original) form of MoE, token-choice, operates from the perspective of a single token. [This paragraph will be more detailed in background section.]{.SJ} However, Mixture of Tokens is more similar to expert-choice, where it is an expert who decides which tokens to process.
-
-[comparison of both token-choice and expert-choice]{.SJ}
-
-{{< include diagrams/_vanillamoes.qmd >}}  -->
 
 In Mixture of Tokens, all experts work independently from one another and act similar to a normal feed-forward layer. The difference in our setup, compared to MoE, is that a single expert receives a weighted average of multiple tokens. Then, output from an expert is rescaled and redistributed to the original tokens. See the diagrams below. [SA stylistycznie]{.SA}
 {{< include diagrams/_general1.qmd >}} 
@@ -332,14 +309,12 @@ The learning rate was tuned separately for both our model and the baseline:
 
 {{< include diagrams/_step.qmd >}}
 Our Mixture of Tokens model attains the dense models' final training loss in just 24% of steps.
-[update plot SA after training finished]{.SA}
 [ZTODO zmienić 24% of traning steps na czarny kolor i tę kreseczkę też, przerywana linia też w innym kolorze]{.SA}
 
 
 
 {{< include diagrams/_time.qmd >}}
 If we measure actual training time, the final dense model loss is achieved in only 33% of time.
-[update plot SA after training finished]{.SA}
 [ZTODO zmienić 33% of traning steps na czarny kolor i tę kreseczkę też, przerywana linia też w innym kolorze]{.SA}
 
 
