@@ -9,3 +9,43 @@
 h2 {
     border-bottom: 0px;
 }
+
+
+
+.simontwice_style {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+}
+
+.simontwice_style div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 30px;
+    margin-bottom: 60px;
+}
+
+
+.simontwice_style svg {
+    width: 100%;
+    height: auto;
+}
+
+@media screen and (min-width: 900pt) {
+    .simontwice_style svg {
+        width: 120%;
+        margin-left: -25%;
+        margin-right: -25%;
+    }
+}
+
+.simontwice_style figcaption {
+    text-align: center;
+    font-size: 0.9em;
+    order: 2;
+    margin-top: 30px;
+    /* This will also help place the figcaption below the SVG. */
+}
