@@ -117,6 +117,7 @@
     "title": "Mixture of Tokens",
     "section": "",
     "text": "We introduce Mixture of Tokens, a novel, fully-differentiable Transformer architecture that allows for increasing model size while keeping computation cost constant\n\nIt avoids problems typical for Mixture of Experts architectures\nIt is compatible with causal and masked Large Language Models"
+
   },
   {
     "objectID": "posts/mixture_of_tokens/index.html#what-is-this-blogpost-about",
@@ -152,6 +153,7 @@
     "title": "Mixture of Tokens",
     "section": "From Mixture of Tokens to Mixture of Experts Dodać opisy do wszystkich plotów w tej sekcji",
     "text": "From Mixture of Tokens to Mixture of Experts Dodać opisy do wszystkich plotów w tej sekcji\nHow do we get from MoT to MoE? Assume that the controller in a Mixture of Tokens layer decided to mix in a very particular way: for a given group to mix, it concetrated the entire weight on one position. In this extreme case, the controller would assign one particular token from the group for each expert. This would make the Mixture of Tokens forward pass equivalent to the Expert Choice described in Background.\nThis scenario has its advantages: in the default Mixture of Tokens setup for autoregressive training, tokens are aggregated across the batch dimension. For decoding, this setup allows for information to be exchanged between different examples. This could be undesirable in some use cases.\nHow could we achieve this controller behavior? One way to do it is to have the controller use a temperature parameter before the softmax operation. Low temperature forces the weight distribution to be very focused - in the limit causing the weights to focus exclusively on one token, as desired. MK: tutaj dać wizualizację\nInterestingly, simply allowing the temperature parameter to be learnable for the controller in a Mixture of Tokens layer encourages this phenomenon: mp\n\n\n\n                                                    \n\n\nAs expected, this results in the controller focusing more on one token. We measured this by monitoring the entropy of weights produced by the controller (avergaed over all token groups and all experts). For the base version of Mixture of Tokens, the results are as follows:\n\n\n\n                                                    \n\n\nWhile the learnable temperature results in near zero entropy in the later layers:\n\n\n\n                                                    \n\n\nInterestingly, this comes at a cost of model performance.\n\n\n\n\n                                                    \n\n\nWe expect allowing the temperature to be learned at the end of training to be a very promising direction for “private” autoregressive decoding: this way, we retain all the benefits of training with a high rate of token mixing, and prevent token mixing during inference.\nobrazki z różnymi temperaturami softmax"
+
   },
   {
     "objectID": "posts/mixture_of_tokens/index.html#from-mixture-of-tokens-to-mixture-of-experts-dodać-opisy-do-wszystkich-plotów-w-tej-sekcji-dać-tytuły-w-title-case",

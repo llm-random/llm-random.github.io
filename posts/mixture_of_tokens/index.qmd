@@ -185,6 +185,7 @@ compares it against standard approach and shows experimental tests of Mixture of
 
 -->
 
+
 # Introduction      
 Mixture of Experts (MoE) architectures have recently garnerned considerable attention for their ability to increase the size of Transformer models while keeping the computational cost of training and inference constant. The most successful MoE approaches achieve this by activating only subsets of a very large feed forward layer for each processed token (the alternative subsets of parameters are often called _experts_). 
 
@@ -195,6 +196,12 @@ Aiming to avoid these problems we propose **Mixture of Tokens**: a new, fully-di
 [GENERAL TODOS: grammarly, go over and rephrase, align and make clearer the Methods section, make mail, tweet, settle on contribution attributions, ]{.SA}
 
 [MP: jakiś fajniejszy opis tekstu nas tronce głównej dać. Można przez display:none'd div.]{.SJ}  
+
+[GENERAL TODOS: grammarly, go over and rephrase, align and make clearer the Methods section, make mail, tweet, settle on contribution attributions, ]{.SA}
+
+[zastanowić się nad kolejnością autorów, głównie SJ]{.SJ}
+
+[jakiś fajniejszy opis tekstu nas tronce głównej dać. Można przez display:none'd div.]{.SJ}
 
 # Motivation 
 ## Scaling Language Models

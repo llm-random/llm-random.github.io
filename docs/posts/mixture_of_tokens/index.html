@@ -417,6 +417,7 @@ compares it against standard approach and shows experimental tests of Mixture of
 </ul>
 </section>
 </section>
+
 <section id="introduction" class="level1">
 <h1>Introduction</h1>
 <p>Mixture of Experts (MoE) architectures have recently garnerned considerable attention for their ability to increase the size of Transformer models while keeping the computational cost of training and inference constant. The most successful MoE approaches achieve this by activating only subsets of a very large feed forward layer for each processed token (the alternative subsets of parameters are often called <em>experts</em>).</p>
@@ -424,6 +425,7 @@ compares it against standard approach and shows experimental tests of Mixture of
 <p>Aiming to avoid these problems we propose <strong>Mixture of Tokens</strong>: a new, fully-differentiable type of architecture that retains all efficiency benefits of MoE and alleviates the aformentioned problems by <em>mixing tokens</em> before feeding them into the feed-forward layer instead of routing tokens to experts, in effect allowing the model to simultaneously learn from all token-expert combinations. Crucially, this technique is fully compatible with both masked and causal LLM training.</p>
 <p><span class="SA">GENERAL TODOS: grammarly, go over and rephrase, align and make clearer the Methods section, make mail, tweet, settle on contribution attributions,</span></p>
 <p><span class="SJ">MP: jakiś fajniejszy opis tekstu nas tronce głównej dać. Można przez display:none’d div.</span></p>
+
 </section>
 <section id="motivation" class="level1">
 <h1>Motivation</h1>
