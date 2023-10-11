@@ -37,8 +37,15 @@ h2 {
 @media screen and (min-width: 900pt) {
     .simontwice_style svg {
         width: 120%;
-        margin-left: -25%;
         margin-right: -25%;
+        margin-top: 30px;
+    }
+}
+
+@media screen and (min-width: 900pt) {
+    .simontwice_style_small svg {
+        margin-top: 30px;
+        transform: scale(0.7);
     }
 }
 
