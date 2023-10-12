@@ -15,7 +15,15 @@ image: profile.jpg
 #       href: https://github.com=
 ---
 
-Blog of LLM-Random research group, centered in IDEAS NCBR, started in mid-2022 by Sebastian Jaszczur. Members, in the order of joining, listed below.
+<!--
+TODO:
+* add twitter/linkedin handles etc.
+* what is IDEAS NCBR, link
+* add research statement, like https://kindly-cartoon-566.notion.site/Informal-research-statement-Piotr-Mi-o-5008a7f6f9c24e6c88a4ba35971d6196 
+
+-->
+
+Blog of LLM-Random research group in [IDEAS NCBR](https://ideas-ncbr.pl/en/), started in mid-2022 by Sebastian Jaszczur. Members, in the order of joining, listed below. We are happy to collaborate with outside institutions.
 
 * Sebastian Jaszczur
 * Marek Cygan (as advisor)
@@ -26,4 +34,8 @@ Blog of LLM-Random research group, centered in IDEAS NCBR, started in mid-2022 b
 * Jan Ludziejewski
 * Michał Krutul
 
-Public repositories of the group are available at [LLM-Random](https://github.com/llm-random/) organization on GitHub.
+Public repositories of the group are available at [on GitHub](https://github.com/llm-random/).
+
+# Research Statement
+
+We are interested in improving the state-of-the-art in Large Language Models, as we believe this to be the most impactful research direction. We want to do this by improving the efficiency of those models during both training and inference. Among the techniques we explore in our work are: Mixture-of-Experts (see [Mixture of Tokens](posts/mixture_of_tokens/) ), fast/speculative decoding (blogpost coming soon), and improving parameter efficiency (see [Neuron Recycling](/posts/neuron_recycling/) ).

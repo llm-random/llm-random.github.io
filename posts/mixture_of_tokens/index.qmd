@@ -1,5 +1,6 @@
 ---
 title: "Mixture of Tokens"
+description: "We introduce Mixture of Tokens, a new, fully-differentiable Transformer architecture that builds on top of Mixture of Experts, while avoiding its problems. It achieves the same performance as the vanilla Transformer with $3\\times$&nbsp;wall-clock speedup and $4\\times$FLOPS reduction."
 author:
     -   name: Szymon Antoniak&nbsp;\*
         equal-contributor: true
@@ -140,7 +141,11 @@ format:
             content: "[SJ] ";
             }
 
-            .NONE {            
+            .Listing {            
+                display: none;
+            }
+
+            .description {
                 display: none;
             }
           </style>
@@ -175,10 +180,15 @@ format:
 - importance weights vs weights vs ???
 - average, not mean
 -->
+<!-- [We introduce Mixture of Tokens, a new, fully-differentiable Transformer architecture that builds on top of Sparse Mixture of Tokens, while avoiding problems that stem from sparsity.
+]{.Listing} -->
 
-## TL;DR
-[We introduce Mixture of Tokens, a novel, fully-differentiable Transformer architecture that allows for increasing model size while keeping computation cost constant. xxxx]{.NONE}
-We introduce Mixture of Tokens, a novel, fully-differentiable Transformer architecture that allows for increasing [the number of model parameters]{.SJ}~~model size~~ while keeping the computation cost constant.
+### TL;DR
+
+
+
+
+We introduce Mixture of Tokens, a novel, fully-differentiable Transformer architecture that allows for increasing the number of model parameters while keeping the computation cost constant.
 
 * It avoids problems typical for Mixture of Experts architectures
 * It is compatible with causal and masked Large Language Models
@@ -186,66 +196,68 @@ We introduce Mixture of Tokens, a novel, fully-differentiable Transformer archit
 
 
 # Introduction      
-Mixture of Experts (MoE) architectures have recently garnered considerable attention for their ability to increase the size of Transformer models while keeping the computational cost of training and inference constant. The most successful MoE approaches achieve this by activating only subsets of a very large feed forward layer for each processed token (the alternative subsets of parameters are often called _experts_). 
+Mixture of Experts (MoE) architectures have recently garnered considerable attention for their ability to increase the size of Transformer models while keeping the computational cost of training and inference constant. The most successful MoE approaches achieve this by activating only subsets of a very large feed-forward layer for each processed token (the alternative subsets of parameters are often called _experts_). 
 
-This technique comes at a cost, though: the operation of choosing the most suitable experts for a given token is discrete, and learning discrete choices is difficult; the models are known to suffer from issues including training instability and expert under- and overload. While some of those problems can be alleviated with e.g. the use of various auxiliary losses or reduced initialisation scale, it is certain that existing MoE techniques are more difficult and less intuitive to train than dense counterparts. 
+This technique comes at a cost, though: the operation of choosing the most suitable experts for a given token is discrete, and learning discrete choices is difficult; the models are known to suffer from issues including training instability and expert under- and overload. While some of those problems can be alleviated with, e.g., the use of various auxiliary losses or reduced initialization scale, it is certain that existing MoE techniques are more difficult and less intuitive to train than dense counterparts. 
 
-Aiming to avoid these problems we propose **Mixture of Tokens**: a new, fully-differentiable type of architecture that retains all efficiency benefits of MoE and alleviates the aformentioned problems by _mixing tokens_ before feeding them into the feed-forward layer instead of routing tokens to experts, in effect allowing the model to simultaneously learn from all token-expert combinations. Crucially, this technique is fully compatible with both masked and causal LLM training.    
+Aiming to avoid these problems, we propose **Mixture of Tokens**: a new, fully-differentiable type of architecture that retains all efficiency benefits of MoE and alleviates the aforementioned problems by _mixing tokens_ before feeding them into the feed-forward layer instead of routing tokens to experts, in effect allowing the model to simultaneously learn from all token-expert combinations. Crucially, this technique is fully compatible with both masked and causal LLM training.    
 
 [GENERAL TODOS: grammarly, go over and rephrase, align and make clearer the Methods section, make mail, tweet, settle on contribution attributions, ]{.SA}
 
 
 # Motivation 
-## Scaling Language Models
-Large language models based on Transformers currently make up one of the most active fields in ​​Artificial Intelligence, exhibiting human-level performance in a variety of tasks. This is in large part due to their scaling properties - [@kaplan2020scaling; @hoffmann2022training] showed that an increase in model size results in a predictable increase in performance. This scaling leads to an ever-growing demand for computational resources, with their effective utilization often deemed as one of the critical challenges of the field [@rae2022scaling; @jaszczur2021sparse; @nawrot2022hierarchical].
+### Scaling Language Models
+Large language models based on Transformers currently make up one of the most active fields in Machine Learning, exhibiting human-level performance in a variety of tasks. This is in large part due to their scaling properties - [@kaplan2020scaling; @hoffmann2022training] showed that an increase in model size results in a predictable increase in performance. This scaling leads to an ever-growing demand for computational resources, with their effective utilization often deemed as one of the critical challenges of the field [@rae2022scaling; @jaszczur2021sparse; @nawrot2022hierarchical].
  
  
-## Mixture of Experts
+### Mixture of Experts
 How can we increase the model size without additional computational cost? Mixture of Expert does this by replacing the feed-forward layer standard for Transformer architectures with a (potentially very large) set of experts, together with a small network often called a *controller*[^1].
 The (trainable) controller matches tokens and experts in a way that each token is processed only by a small subset of experts.
 
-Similarly to vanilla Transformers, the performance of MoE models also scale with parameter count [@clark2022unified]. For a more detailed background and explanation of variants of the MoE architecture, see [Background](#sec-back).
+Similarly to vanilla Transformers, the performance of MoE models also scales with parameter count [@clark2022unified]. For a more detailed background and explanation of variants of the MoE architecture, see [Background](#sec-back).
 
 [^1]: *router* is also commonly used in MoE literature.
 
 
 
  
-## Limitations of current approaches 
-While the performance of the huge-parameter-count MoE architectures is impressive, they come with an entirely new set of challenges, during both training and inference. The most notable include:
+### Limitations of current approaches 
+While the performance of the huge-parameter-count MoE architectures is impressive, they come with an entirely new set of challenges during both training and inference. The most notable include:
 
-* **Training instability.** Multiple studies [@fedus2022switch; @du2022glam; @mustafa2022multimodal] report difficulties in training MoE models due to instabilities. This is likely due to with the nature of the technique: the operation of choosing top-k most relevant tokens/experts in discrete, and thus small changes of controller weights can have disproportional effects on controller decisions. We hypothesise that existing techniques used for training the cotnroller with gradient descent, while somewhat effective, do not entirely solve this problem. [@jaszczur2021sparse] reported training stability improvements due to using a weighted average of expert outputs instead of sampling.
+* **Training instability.** Multiple studies [@fedus2022switch; @du2022glam; @mustafa2022multimodal] report difficulties in training MoE models due to instabilities. This is likely due to the nature of the technique: the operation of choosing top-k most relevant tokens/experts in discrete, and thus small changes of controller weights can have disproportional effects on controller decisions. We hypothesize that existing techniques used for training the controller with gradient descent, while somewhat effective, do not entirely solve this problem. [@jaszczur2021sparse] reported training stability improvements due to using a weighted average of expert outputs.
 
-* **Load imbalance.** Typically, in MoE we set the maximum *capacity* for each expert. However, we are not able to efficiently restrict the choice of the routing network to assign tokens in a perfectly balanced way. This leads to *token dropping* (when some tokens are not processed by an expert) and *mode collapse* (when the cotroller sends almost all tokens to a few experts).
+* **Load imbalance.** Typically, in MoE we set the maximum *capacity* for each expert. However, we are not able to efficiently restrict the choice of the routing network to assign tokens in a perfectly balanced way. This leads to *token dropping* (when some tokens are not processed by an expert) and *mode collapse* (when the controller sends almost all tokens to a few experts).
 
-* **Information leak.** Some of the most successful MoE methods process tokens from different positions in a sequence together (i.e. by comparing scores of all tokens in a batch). This imposes an information leak, and hinders their utility in autoregressive decoding. 
+* **Information leak.** Some of the most successful MoE methods process tokens from different positions in a sequence together (i.e., by comparing scores of all tokens in a batch). This imposes an information leak and hinders their utility in autoregressive decoding. 
 
-Our technique is as stable as a vanilla Transformer, because the network is fully differentiable and no discrete choices are made during training. As every expert receives the same number of tokens, the issue of load imbalance is side-stepped as well. Finally, our technique is fully compatible with autoregressive decoding.
+Our technique is as stable as a vanilla Transformer because the network is fully differentiable, and no discrete choices are made during training. As every expert receives the same number of tokens, the issue of load imbalance is side-stepped as well. Finally, our technique is fully compatible with autoregressive decoding.
 See a detailed explanation of the technique in [Method]. 
 
 
 # Background {#sec-back}
-In the context of language models, Mixture of Experts was originally proposed in [@shazeer2017outrageously]. The basic idea is as follows: instead of processing all tokens with the standard feed-forward layer, we route each processed token to a small subset of multiple experts. The technique was further simplified by [@fedus2022switch] by proposing the Switch Transformer, which sends each token to only *one* expert with the highest score produced by the controller. The technique allowed them to train a 1.6T model with a T5 architecture with FLOP cost of an equivalent 1.4B vanilla Transformer. In both cases auxiliary losses are needed in order to encourage exploration and mitigate load imbalance across experts. 
+In the context of language models, Mixture of Experts was originally proposed in [@shazeer2017outrageously]. The basic idea is as follows: instead of processing all tokens with the standard feed-forward layer, we route each processed token to a small subset of multiple experts. The technique was further simplified by [@fedus2022switch] by proposing the Switch Transformer, which sends each token to only *one* expert with the highest score produced by the controller. The technique allowed them to train a 1.6T model with a T5 architecture with FLOPS cost of an equivalent 1.4B vanilla Transformer. In both cases, auxiliary losses are needed in order to encourage exploration and mitigate load imbalance across experts. 
 
-More recently, [@zhou2022mixtureofexperts] proposed Expert Choice, where, in contrast to Switch, each *expert* chooses which token to process. This results in a tradeoff: on one hand, each expert receives the same number of tokens, side stepping the load balancing issue, one the other hand different tokens might be attended to by varying numbers of experts and some tokens might not be chosen by any expert. Both approaches, as well as a standard feed-forward Transformer layer, are illustrated in the diagram below.
+More recently, [@zhou2022mixtureofexperts] proposed Expert Choice, where, in contrast to Switch, each *expert* chooses which token to process. This results in a tradeoff: on the one hand, each expert receives the same number of tokens, sidestepping the load-balancing issue; on the other hand, different tokens might be attended to by varying numbers of experts, and some tokens might not be chosen by any expert. Both approaches, as well as a standard feed-forward Transformer layer, are illustrated in the diagram below.
 
 
  
 
 {{< include diagrams/_expert_v_token.qmd >}}  
+   
 
 
-
-There is a number of works that try to improve stability and quality of the controller: including methods based on reinforcement learning [@BengioBPP15], routing by hashing [@04426], optimal transport [@clark2022unified] and more [@dai2022stablemoe; @chi2022representation]. 
-[@base] adress the load balancing problem by linear programming while [@bpr] tries to achieve this by learning to drop unimportant tokens. 
+There are a number of works that try to improve the stability and quality of the controller, including methods based on reinforcement learning [@BengioBPP15], routing by hashing [@04426], optimal transport [@clark2022unified], and more [@dai2022stablemoe; @chi2022representation]. 
+[@base] address the load balancing problem by linear programming while [@bpr] tries to achieve this by learning to drop unimportant tokens. 
 
 Concurrently to our work, [@puigcerver2023sparse] proposed a continuous variant of Mixture of Experts for the Vision Transformer, limited to encoder-only models. Another approach allowing to avoid discrete operations in MoE by merging experts was presented in [@muqeeth2023soft].   
 
 
-# Method [MP: 1. zrobić korektę 2. podzielić na sekcje]{.MP}
+# Method {#sec-method}
+
+<!-- 
 
 [Link to diagrams: https://drive.google.com/file/d/1jvew0ft43zpaG-iCk7Ob2ilJw7VjsyeZ/view?usp=sharing ]{.SJ}
-<!-- 
+
 [Move this paragraph to background]{.SJ}
 The general idea of Mixture of Tokens is to run multiple experts which independently aggregate and process tokens. The most common (and original) form of MoE, token-choice, operates from the perspective of a single token. [This paragraph will be more detailed in background section.]{.SJ} However, Mixture of Tokens is more similar to expert-choice, where it is an expert who decides which tokens to process. [Korekta]{.MP}
 
@@ -253,54 +265,93 @@ The general idea of Mixture of Tokens is to run multiple experts which independe
 
 {{< include diagrams/_vanillamoes.qmd >}}  -->
 
-Let's say we have a model and we would like to increase its parameter count without increasing its runtime. One of the ways to achieve this is utilized by Mixture of Experts architectures - only a subset of parameters is used for a given input. The other strategy would be to somehow merge the examples and process them together. The latter design lies at the heart of Mixture of Tokens, allowing it to overcome problems present in MoE.
+Let's say we have a Transformer model, and we would like to increase the parameter count in the feed-forward layers without increasing model runtime. One of the ways to achieve this is to activate only a subset of parameters for a given token - this gives rise to Mixture of Experts architectures. Another way would be to somehow merge the tokens and process them together. This idea lies at the heart of Mixture of Tokens. \
+Because the mixing operation is continuous, the architecture does not experience the problems present in MoE. [This diagram](#diag-intuition) shows an intuitive comparison of Mixture of Tokens with Mixture of Experts.
 
 {{< include diagrams/_intuition.qmd >}}
   
-~~In practice, we use multiple different experts, each processing the same groups of tokens, just with groups merged in different ways for different experts. This design is similar in spirit to multi-head attention, with each attention head operating on the same groups of tokens, but aggregating them with different weights. As well, similarly to the Attention layer, each expert works independently from one another, so in later sections we will just explain a single expert's behavior.~~
+<!-- 
+~~In practice, we use multiple different experts, each processing the same groups of tokens, just with groups mixed in different ways for different experts. This design is similar in spirit to multi-head attention, with each attention head operating on the same groups of tokens, but aggregating them with different weights. As well, similarly to the Attention layer, each expert works independently from one another, so in later sections we will just explain a single expert's behavior.~~ 
+-->
 
-[This diagram](#diag-intuition) shows an intuitive comparison of Mixture of Tokens with Mixture of Experts. In practice however, tokens from each group are mixed in multiple ways, with each such mixture being processed by a different expert feed-forward layer. This is similar to
-
+In the final design, similar to Multi-Head Attention, we sacrifice a single, big representation for multiple, independent, smaller ones: we divide the large feed-forward layer into experts and send a separate mixture to each expert. The resulting network is illustrated [here](#mot-design).
+ 
   
 
-{{< include diagrams/_mot_illustrated.qmd >}} 
+{{< include diagrams/_mot_illustrated.qmd >}}   
+
+### How to Mix Tokens  
+
+In order to mix tokens for a given group, we need importance weights for each token. To get those, we send each token through the controller (a standard linear layer) and calculate a softmax over the resulting token scores. Note that the weights are calculated independently for each expert - as visible in the [diagram](#mot-design).\
+Now that we have importance weights, we simply multiply each token by its importance weight and add all of them together.
+
+### How to Redistribute the Mixed Tokens
+
+Once every mixed token is processed by their respective expert, we redistribute them according to the importance weights we calculated before. See the equations below for details.
 
 
-To merge all the tokens for the expert we have to compute the importance weights for each token (those importance weights will be different for each and every expert). We use a simple controller ended with a softmax. Then, after merging the tokens, we process the resulting representation with the actual expert (FFN layer). Each of those experts is a simple MLP network, the same as standard feed-forward layer in vanilla Transformer architecture. After this processing we just distribute the expert output according to the same importance weights. See the equations below for details.
+ 
 
-$$
+{{< include diagrams/_latex_code.qmd >}}
+
+<!-- $$
 \begin{align*}
-\text{importance}_i &= Softmax(Linear(\text{token}_i)) \\
-\text{mergedToken} &= \sum_i \text{token}_i * \text{importance}_i \\
-\text{expertOutput} &= FFN(\text{mergedToken}) \\
-\text{for each } i: \text{distributedOutput}_i &= \text{expertOutput} * \text{importance}_i
+\text{for each } e \text{  in experts}: \\
+\text{imp\_weights} &= Softmax(Linear(\text{tokens})) \\
+\text{mix} &= \sum_i \text{token}_{\,i} * \text{imp\_weights}_{\,i} \\
+\text{expert\_output} &= FFN(\text{mix}) \\
+\text{for each } i: \text{final\_output}_{\,i} &= \text{expert\_output} * \text{importance}_{\,i}
 \end{align*}
-$$
+$$ -->
+
+
+
+<!-- {{< include diagrams/_general1.qmd >}} 
+
+
 
 The $\text{distributedOutput}_i$ is what will be added to the residual stream to $i$-th token. See the diagram below for visualization of those equations. [this diagram could/should be visually improved]{.SJ}
+
+{{< include diagrams/_mergeemit.qmd >}}
+
+-->
+
+
 
 
 <!-- {{< include diagrams/_general1.qmd >}} -->
 
 <!-- {{< include diagrams/_ffn1.qmd >}} -->
 
+ 
 
-{{< include diagrams/_mergeemit.qmd >}}
 
-## How to Group Tokens in MoT
+### How to Group Tokens in MoT
 
-The only question left is a matter of grouping tokens in an autoregressive decoding. For each and every sentence we will process exactly one token at a time during inference, and we want to simulate that environment during training. Therefore, we cannot put two tokens from the same sequence into a single group even during training, as we will not be processing them at the same time during inference. Fortunately, the training and inference is ussually performed in batches, so we can mix tokens on the same position from multiple sequences. See the diagram below.
+The only question left is how to group tokens - we will show the grouping scheme for autoregressive decoding. While it would be natural to mix tokens within sequences, it would be very inefficient: in vanilla Transformers, nothing is recomputed for tokens already present in the decoded sequence. This allows for very efficient (FLOP-wise) decoding, and we want to keep it that way. Thus, in order to run computations for any given token only once, we group tokens *across* sequences, i.e., according to position in a sequence. The diagram illustrates the grouping scheme.
 
-{{< include diagrams/_grouping.qmd >}}
+ 
+<!-- For each and every sentence we will process exactly one token at a time during inference, and we want to simulate that environment during training. Therefore, we cannot put two tokens from the same sequence into a single group even during training, as we will not be processing them at the same time during inference. Fortunately, the training and inference is ussually performed in batches, so we can mix tokens on the same position from multiple sequences. See the diagram below. -->  
+
+
+{{< include diagrams/_default_group.qmd >}}
 
 While the maximum size of the group is limited by the batch size (number of sequences), note that those two numbers are not coupled together. We can always, if we want to, make groups smaller than the batch size.
 
-{{< include diagrams/_different_group.qmd >}}
+{{< include diagrams/_small_group.qmd >}}
  
-## Summarized algorithm
+### Algorithm Summary 
 
-The pseudocode for computing output of MoT layer is as follows:
+The algorithm for computing the output of a Mixture of Tokens layer is as follows:
 
+1. Group tokens by position in the sequence
+2. Independently for each group:
+    a. For each expert independently, calculate importance weights for the tokens in the group
+    b. For each expert independently, calculate the mixed token
+    c. Process each mixed token with the respective expert
+    d. Redistribute the mixed tokens to the original ones using weights from step *2a*.
+
+<!-- 
 $$
 \begin{align*}
 1. & \text{Group tokens according to position} \\
@@ -311,6 +362,8 @@ $$
 & d. \text{Add the output to the residual stream of each token, scaled by its weight from step (2a)} \\
 \end{align*}
 $$
+-->
+
 
 <!-- 1. Group tokens according to position
 2. Independently for each expert and each group:
@@ -320,9 +373,11 @@ $$
     d. Add the output to the residual stream of each token, scaled by its weight from step (2a)
 -->
 
+
+
 # Experiments
-## Experimental setup
-For the baseline, we train a standard GPT-like model on the language modeling task using cross entropy loss on the C4 dataset [@2019t5]. Our model replaces all feed-forward layers with Mixture of Tokens layers.
+### Experimental setup
+For the baseline, we train a standard GPT-like model on the language modeling task using cross-entropy loss on the C4 dataset [@2019t5]. Our model replaces all feed-forward layers with Mixture of Tokens layers.
 
 In our proof-of-concept experiments, we train a decoder-only Transformer model with the following hyperparameters:
 
@@ -340,16 +395,16 @@ For the model implementing Mixture of Tokens we choose the following hyperparame
 ::: {.callout-note icon=false}
 ## Mixture of Tokens Hyperparameters
 
-* 32 group size
+* 32 group size  
 * 512 experts
 * 32x more parameters than the feed-forward layer in the baseline model
 ::: 
 
-When training both the baseline and the Mixture of Token models we use the following setup:
+When training both the baseline and the Mixture of Token models, we use the following setup:
 
 ::: {.callout-note icon=false}
 ## Training Setup
-
+    
 * 250K training steps
 * 256 context length
 * 256 batch size
@@ -365,30 +420,30 @@ The learning rate was tuned separately for both our model and the baseline:
 ## Learning Rate
 
 * Baseline: 4e-3
-* Mixture of Tokens: 2e-3
+* Mixture of Tokens: 2e-3 
 :::
 
+  
 
 
-
-## Results
+# Results
 Our technique shows very promising results, reducing the required training steps by a factor of 4. The training time gains are also very significant.
 
 {{< include diagrams/_step.qmd >}}
 {{< include diagrams/_time.qmd >}}
+  
+# Next steps            
  
-# Next steps
+### Scaling Up  
+Our preliminary experiments suggest that Mixture of Tokens might work even better for larger model sizes. In the upcoming weeks, we aim to prepare a comprehensive comparison of larger models and compare with Mixture of Experts methods. [compare them with? compare MoT with?]{.MP}
 
-## Scaling Up  
-Our preliminary experiments suggest that Mixture of Tokens might work even better for larger model sizes. In upcoming weeks we aim to prepare a comprehensive comparison of larger models and ~~compare~~ them to Mixture of Experts methods.
-
-## From Mixture of Tokens to Mixture of Experts
-
+### From Mixture of Tokens to Mixture of Experts
+ 
 How do we get from MoT to MoE? Assume that the controller in a Mixture of Tokens layer decided to mix in a very particular way: for a given group, it concentrated the entire weight on just one token. In this extreme case, each expert would receive a single, unmixed token. This would make the Mixture of Tokens forward pass equivalent to the Expert Choice described in [Background].
 
-This scenario has its advantages: in the default Mixture of Tokens setup for autoregressive training, tokens are aggregated across the batch dimension. However, during decoding, this setup allows for information to be exchanged between different examples. This could be undesirable in some use cases, e.g. when different examples in the same batch come from different users in the industry setting, possibly with privacy issues.
+This scenario has its advantages: in the default Mixture of Tokens setup for autoregressive training, tokens are aggregated across the batch dimension. However, during decoding, this setup allows for information to be exchanged between different examples. This could be undesirable in some use cases, e.g., when different examples in the same batch come from different users in the industry setting, possibly with privacy issues.
 
-How could we make the controller focus on a single example? One can achieve this by adding a temperature parameter to the softmax operation used by the controller. Low temperature forces the weight distribution to concentrate - in the limit (as temperature approaches 0) causing the weights to focus exclusively on the token with the highest controller score.
+How could we make the controller focus on a single example? One can achieve this by adding a temperature parameter to the softmax operation used by the controller. Low temperature forces the weight distribution to concentrate - in the limit (as the temperature approaches 0), causing the weights to focus exclusively on the token with the highest controller score.
 
 {{< include diagrams/_temp_influence.qmd >}} 
 
@@ -403,19 +458,16 @@ As expected, this results in the controller focusing more on one token. We measu
 {{< include diagrams/_entropy_comparison.qmd >}}      
 
 
-Interestingly, this comes at a cost of model performance.
+Interestingly, this comes at the cost of model performance.
 
 {{< include diagrams/_step_temp_loss.qmd >}}
 
-We expect allowing the temperature to be learned at the end of training to be a very promising direction for "private" autoregressive decoding. That way, we would retain all the benefits of training with a high rate of token mixing, and prevent token mixing during inference. 
+We expect allowing the temperature to be learned at the end of training to be a very promising direction for "private" autoregressive decoding. That way, we would retain all the benefits of training with a high rate of token mixing and prevent token mixing during inference. 
 
      
  
 # Conclusions
 We have shown the preliminary results showing the promise of Mixture of Tokens improving the stability of training in comparison with MoE approaches and decreasing the training time $3\times$ when compared to the vanilla Transformer.
-We expect even greater improvements in larger models - more thorough experiments are underway at the moment and we plan to release the paper with more results in the coming weeks. In the meantime, you can contact us with any feedback you have at llm.random.team@gmail.com.[add twitter begging 'retweet us.]{.SJ}
-
-- Method: SJ / MP / TO
-- TO przejrzy i myśli zmianie narracji  
+We expect even greater improvements in larger models - more thorough experiments are underway at the moment, and we plan to release the paper with more results in the coming weeks. In the meantime, you can contact us with any feedback you have at [llm.random.team@gmail.com](mailto:llm.random.team@gmail.com).[add "or respond to the twitter thread here: ", maybe also "reply on reddit here:"]{.SJ} [Can somebody check if this link actually works?]{.SJ}
 
 
