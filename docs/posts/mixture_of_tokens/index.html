@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.3.361">
+<meta name="generator" content="quarto-1.3.450">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -429,25 +429,25 @@ gtag('config', 'G-QHXJCKXK7M', { 'anonymize_ip': true});
 <h1>Introduction</h1>
 <p>Mixture of Experts (MoE) architectures have recently garnered considerable attention for their ability to increase the size of Transformer models while keeping the computational cost of training and inference constant. The most successful MoE approaches achieve this by activating only subsets of a very large feed-forward layer for each processed token (the alternative subsets of parameters are often called <em>experts</em>).</p>
 <p>This technique comes at a cost, though: the operation of choosing the most suitable experts for a given token is discrete, and learning discrete choices is difficult; the models are known to suffer from issues including training instability and expert under- and overload. While some of those problems can be alleviated with, e.g., the use of various auxiliary losses or reduced initialization scale, it is certain that existing MoE techniques are more difficult and less intuitive to train than dense counterparts.</p>
-<p>Aiming to avoid these problems, we propose <strong>Mixture of Tokens</strong>: a new, fully-differentiable type of architecture that retains all efficiency benefits of MoE and alleviates the aforementioned problems by <em>mixing tokens</em> before feeding them into the feed-forward layer instead of routing tokens to experts, in effect allowing the model to simultaneously learn from all token-expert combinations. Crucially, this technique is fully compatible with both masked and causal LLM training.</p>
+<p>Aiming to avoid these problems, we propose <strong>Mixture of Tokens</strong>: a new, fully-differentiable type of architecture that retains all efficiency benefits of MoE and avoids the the aforementioned problems by, instead of routing tokens to experts, mixing tokens from <strong>different examples</strong> before feeding them into experts, in effect allowing the model to simultaneously learn from all token-expert combinations. Importantly, mixing can be disabled to avoid mixing of different sequences during inference. Crucially, this technique is fully compatible with both masked and causal LLM training.</p>
 <p><span class="SA">GENERAL TODOS: grammarly, go over and rephrase, align and make clearer the Methods section, make mail, tweet, settle on contribution attributions,</span></p>
 </section>
 <section id="motivation" class="level1">
 <h1>Motivation</h1>
 <section id="scaling-language-models" class="level3">
 <h3 class="anchored" data-anchor-id="scaling-language-models">Scaling Language Models</h3>
-<p>Large language models based on Transformers currently make up one of the most active fields in Machine Learning, exhibiting human-level performance in a variety of tasks. This is in large part due to their scaling properties - <span class="citation" data-cites="kaplan2020scaling hoffmann2022training">(<a href="#ref-kaplan2020scaling" role="doc-biblioref">Kaplan et al. 2020</a>; <a href="#ref-hoffmann2022training" role="doc-biblioref">Hoffmann et al. 2022</a>)</span> showed that an increase in model size results in a predictable increase in performance. This scaling leads to an ever-growing demand for computational resources, with their effective utilization often deemed as one of the critical challenges of the field <span class="citation" data-cites="rae2022scaling jaszczur2021sparse nawrot2022hierarchical">(<a href="#ref-rae2022scaling" role="doc-biblioref">Rae et al. 2022</a>; <a href="#ref-jaszczur2021sparse" role="doc-biblioref">Jaszczur et al. 2021</a>; <a href="#ref-nawrot2022hierarchical" role="doc-biblioref">Nawrot et al. 2022</a>)</span>.</p>
+<p>Large language models based on Transformers currently make up one of the most active fields in Machine Learning, exhibiting human-level performance in a variety of tasks. This is in large part due to their scaling properties - <span class="citation" data-cites="kaplan2020scaling hoffmann2022training">(<a href="#ref-kaplan2020scaling" role="doc-biblioref">Kaplan et al., 2020</a>; <a href="#ref-hoffmann2022training" role="doc-biblioref">Hoffmann et al., 2022</a>)</span> showed that an increase in model size results in a predictable increase in performance. This scaling leads to an ever-growing demand for computational resources, with their effective utilization often deemed as one of the critical challenges of the field <span class="citation" data-cites="rae2022scaling jaszczur2021sparse nawrot2022hierarchical">(<a href="#ref-rae2022scaling" role="doc-biblioref">Rae et al., 2022</a>; <a href="#ref-jaszczur2021sparse" role="doc-biblioref">Jaszczur et al., 2021</a>; <a href="#ref-nawrot2022hierarchical" role="doc-biblioref">Nawrot et al., 2022</a>)</span>.</p>
 </section>
 <section id="mixture-of-experts" class="level3">
 <h3 class="anchored" data-anchor-id="mixture-of-experts">Mixture of Experts</h3>
 <p>How can we increase the model size without additional computational cost? Mixture of Expert does this by replacing the feed-forward layer standard for Transformer architectures with a (potentially very large) set of experts, together with a small network often called a <em>controller</em><a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. The (trainable) controller matches tokens and experts in a way that each token is processed only by a small subset of experts.</p>
-<p>Similarly to vanilla Transformers, the performance of MoE models also scales with parameter count <span class="citation" data-cites="clark2022unified">(<a href="#ref-clark2022unified" role="doc-biblioref">Clark et al. 2022</a>)</span>. For a more detailed background and explanation of variants of the MoE architecture, see <a href="#sec-back">Background</a>.</p>
+<p>Similarly to vanilla Transformers, the performance of MoE models also scales with parameter count <span class="citation" data-cites="clark2022unified">(<a href="#ref-clark2022unified" role="doc-biblioref">Clark et al., 2022</a>)</span>. For a more detailed background and explanation of variants of the MoE architecture, see <a href="#sec-back">Background</a>.</p>
 </section>
 <section id="limitations-of-current-approaches" class="level3">
 <h3 class="anchored" data-anchor-id="limitations-of-current-approaches">Limitations of current approaches</h3>
 <p>While the performance of the huge-parameter-count MoE architectures is impressive, they come with an entirely new set of challenges during both training and inference. The most notable include:</p>
 <ul>
-<li><p><strong>Training instability.</strong> Multiple studies <span class="citation" data-cites="fedus2022switch du2022glam mustafa2022multimodal">(<a href="#ref-fedus2022switch" role="doc-biblioref">Fedus, Zoph, and Shazeer 2022</a>; <a href="#ref-du2022glam" role="doc-biblioref">Du et al. 2022</a>; <a href="#ref-mustafa2022multimodal" role="doc-biblioref">Mustafa et al. 2022</a>)</span> report difficulties in training MoE models due to instabilities. This is likely due to the nature of the technique: the operation of choosing top-k most relevant tokens/experts in discrete, and thus small changes of controller weights can have disproportional effects on controller decisions. We hypothesize that existing techniques used for training the controller with gradient descent, while somewhat effective, do not entirely solve this problem. <span class="citation" data-cites="jaszczur2021sparse">(<a href="#ref-jaszczur2021sparse" role="doc-biblioref">Jaszczur et al. 2021</a>)</span> reported training stability improvements due to using a weighted average of expert outputs.</p></li>
+<li><p><strong>Training instability.</strong> Multiple studies <span class="citation" data-cites="fedus2022switch du2022glam mustafa2022multimodal">(<a href="#ref-fedus2022switch" role="doc-biblioref">Fedus et al., 2022</a>; <a href="#ref-du2022glam" role="doc-biblioref">Du et al., 2022</a>; <a href="#ref-mustafa2022multimodal" role="doc-biblioref">Mustafa et al., 2022</a>)</span> report difficulties in training MoE models due to instabilities. This is likely due to the nature of the technique: the operation of choosing top-k most relevant tokens/experts in discrete, and thus small changes of controller weights can have disproportional effects on controller decisions. We hypothesize that existing techniques used for training the controller with gradient descent, while somewhat effective, do not entirely solve this problem. <span class="citation" data-cites="jaszczur2021sparse">(<a href="#ref-jaszczur2021sparse" role="doc-biblioref">Jaszczur et al., 2021</a>)</span> reported training stability improvements due to using a weighted average of expert outputs.</p></li>
 <li><p><strong>Load imbalance.</strong> Typically, in MoE we set the maximum <em>capacity</em> for each expert. However, we are not able to efficiently restrict the choice of the routing network to assign tokens in a perfectly balanced way. This leads to <em>token dropping</em> (when some tokens are not processed by an expert) and <em>mode collapse</em> (when the controller sends almost all tokens to a few experts).</p></li>
 <li><p><strong>Information leak.</strong> Some of the most successful MoE methods process tokens from different positions in a sequence together (i.e., by comparing scores of all tokens in a batch). This imposes an information leak and hinders their utility in autoregressive decoding.</p></li>
 </ul>
@@ -456,8 +456,8 @@ gtag('config', 'G-QHXJCKXK7M', { 'anonymize_ip': true});
 </section>
 <section id="sec-back" class="level1">
 <h1>Background</h1>
-<p>In the context of language models, Mixture of Experts was originally proposed in <span class="citation" data-cites="shazeer2017outrageously">(<a href="#ref-shazeer2017outrageously" role="doc-biblioref">Shazeer et al. 2017</a>)</span>. The basic idea is as follows: instead of processing all tokens with the standard feed-forward layer, we route each processed token to a small subset of multiple experts. The technique was further simplified by <span class="citation" data-cites="fedus2022switch">(<a href="#ref-fedus2022switch" role="doc-biblioref">Fedus, Zoph, and Shazeer 2022</a>)</span> by proposing the Switch Transformer, which sends each token to only <em>one</em> expert with the highest score produced by the controller. The technique allowed them to train a 1.6T model with a T5 architecture with FLOPS cost of an equivalent 1.4B vanilla Transformer. In both cases, auxiliary losses are needed in order to encourage exploration and mitigate load imbalance across experts.</p>
-<p>More recently, <span class="citation" data-cites="zhou2022mixtureofexperts">(<a href="#ref-zhou2022mixtureofexperts" role="doc-biblioref">Zhou et al. 2022</a>)</span> proposed Expert Choice, where, in contrast to Switch, each <em>expert</em> chooses which token to process. This results in a tradeoff: on the one hand, each expert receives the same number of tokens, sidestepping the load-balancing issue; on the other hand, different tokens might be attended to by varying numbers of experts, and some tokens might not be chosen by any expert. Both approaches, as well as a standard feed-forward Transformer layer, are illustrated in the diagram below.</p>
+<p>In the context of language models, Mixture of Experts was originally proposed in <span class="citation" data-cites="shazeer2017outrageously">(<a href="#ref-shazeer2017outrageously" role="doc-biblioref">Shazeer et al., 2017</a>)</span>. The basic idea is as follows: instead of processing all tokens with the standard feed-forward layer, we route each processed token to a small subset of multiple experts. The technique was further simplified by <span class="citation" data-cites="fedus2022switch">(<a href="#ref-fedus2022switch" role="doc-biblioref">Fedus et al., 2022</a>)</span> by proposing the Switch Transformer, which sends each token to only <em>one</em> expert with the highest score produced by the controller. The technique allowed them to train a 1.6T model with a T5 architecture with FLOPS cost of an equivalent 1.4B vanilla Transformer. In both cases, auxiliary losses are needed in order to encourage exploration and mitigate load imbalance across experts.</p>
+<p>More recently, <span class="citation" data-cites="zhou2022mixtureofexperts">(<a href="#ref-zhou2022mixtureofexperts" role="doc-biblioref">Zhou et al., 2022</a>)</span> proposed Expert Choice, where, in contrast to Switch, each <em>expert</em> chooses which token to process. This results in a tradeoff: on the one hand, each expert receives the same number of tokens, sidestepping the load-balancing issue; on the other hand, different tokens might be attended to by varying numbers of experts, and some tokens might not be chosen by any expert. Both approaches, as well as a standard feed-forward Transformer layer, are illustrated in the diagram below.</p>
 <div class="simontwice_style">
     <svg width="1750" height="338" viewbox="0 0 1750 338" fill="none" xmlns="http://www.w3.org/2000/svg" class="wide">
     <rect width="1750" height="338" fill="#E5E5E5"></rect>
@@ -549,8 +549,8 @@ gtag('config', 'G-QHXJCKXK7M', { 'anonymize_ip': true});
 <div class="simontwice_style_caption">
 The standard feed-forward (left) processes each token independently. In Switch (center), many tokens can choose the same expert, increasing the processing time for that expert. In Expert Choice (right) all experts process the same number of tokens, but some tokens might not be picked by any expert, resulting in no update for that input token.
 </div>
-<p>There are a number of works that try to improve the stability and quality of the controller, including methods based on reinforcement learning <span class="citation" data-cites="BengioBPP15">(<a href="#ref-BengioBPP15" role="doc-biblioref">Bengio et al. 2015</a>)</span>, routing by hashing <span class="citation" data-cites="04426">(<a href="#ref-04426" role="doc-biblioref">Roller et al. 2021</a>)</span>, optimal transport <span class="citation" data-cites="clark2022unified">(<a href="#ref-clark2022unified" role="doc-biblioref">Clark et al. 2022</a>)</span>, and more <span class="citation" data-cites="dai2022stablemoe chi2022representation">(<a href="#ref-dai2022stablemoe" role="doc-biblioref">Dai et al. 2022</a>; <a href="#ref-chi2022representation" role="doc-biblioref">Chi et al. 2022</a>)</span>. <span class="citation" data-cites="base">(<a href="#ref-base" role="doc-biblioref">Lewis et al. 2021</a>)</span> address the load balancing problem by linear programming while <span class="citation" data-cites="bpr">(<a href="#ref-bpr" role="doc-biblioref">Riquelme et al. 2021</a>)</span> tries to achieve this by learning to drop unimportant tokens.</p>
-<p>Concurrently to our work, <span class="citation" data-cites="puigcerver2023sparse">(<a href="#ref-puigcerver2023sparse" role="doc-biblioref">Puigcerver et al. 2023</a>)</span> proposed a continuous variant of Mixture of Experts for the Vision Transformer, limited to encoder-only models. Another approach allowing to avoid discrete operations in MoE by merging experts was presented in <span class="citation" data-cites="muqeeth2023soft">(<a href="#ref-muqeeth2023soft" role="doc-biblioref">Muqeeth, Liu, and Raffel 2023</a>)</span>.</p>
+<p>There are a number of works that try to improve the stability and quality of the controller, including methods based on reinforcement learning <span class="citation" data-cites="BengioBPP15">(<a href="#ref-BengioBPP15" role="doc-biblioref">Bengio et al., 2015</a>)</span>, routing by hashing <span class="citation" data-cites="04426">(<a href="#ref-04426" role="doc-biblioref">Roller et al., 2021</a>)</span>, optimal transport <span class="citation" data-cites="clark2022unified">(<a href="#ref-clark2022unified" role="doc-biblioref">Clark et al., 2022</a>)</span>, and more <span class="citation" data-cites="dai2022stablemoe chi2022representation">(<a href="#ref-dai2022stablemoe" role="doc-biblioref">Dai et al., 2022</a>; <a href="#ref-chi2022representation" role="doc-biblioref">Chi et al., 2022</a>)</span>. <span class="citation" data-cites="base">(<a href="#ref-base" role="doc-biblioref">Lewis et al., 2021</a>)</span> address the load balancing problem by linear programming while <span class="citation" data-cites="bpr">(<a href="#ref-bpr" role="doc-biblioref">Riquelme et al., 2021</a>)</span> tries to achieve this by learning to drop unimportant tokens.</p>
+<p>Concurrently to our work, (Puigcerver et al.&nbsp;2023) proposed a continuous variant of Mixture of Experts for the Vision Transformer, limited to encoder-only models where patches are mixed only within each image. Another approach allowing to avoid discrete operations in MoE by merging experts was presented in <span class="citation" data-cites="muqeeth2023soft">(<a href="#ref-muqeeth2023soft" role="doc-biblioref">Muqeeth et al., 2023</a>)</span>.</p>
 </section>
 <section id="sec-method" class="level1">
 <h1>Method</h1>
@@ -1300,7 +1300,7 @@ $$
 <h1>Experiments</h1>
 <section id="experimental-setup" class="level3">
 <h3 class="anchored" data-anchor-id="experimental-setup">Experimental setup</h3>
-<p>For the baseline, we train a standard GPT-like model on the language modeling task using cross-entropy loss on the C4 dataset <span class="citation" data-cites="2019t5">(<a href="#ref-2019t5" role="doc-biblioref">Raffel et al. 2019</a>)</span>. Our model replaces all feed-forward layers with Mixture of Tokens layers.</p>
+<p>For the baseline, we train a standard GPT-like model on the language modeling task using cross-entropy loss on the C4 dataset <span class="citation" data-cites="2019t5">(<a href="#ref-2019t5" role="doc-biblioref">Raffel et al., 2019</a>)</span>. Our model replaces all feed-forward layers with Mixture of Tokens layers.</p>
 <p>In our proof-of-concept experiments, we train a decoder-only Transformer model with the following hyperparameters:</p>
 <div class="callout callout-style-default callout-note no-icon callout-titled">
 <div class="callout-header d-flex align-content-center">
@@ -1460,72 +1460,73 @@ Learning Rate
 <section id="conclusions" class="level1">
 <h1>Conclusions</h1>
 <p>We have shown the preliminary results showing the promise of Mixture of Tokens improving the stability of training in comparison with MoE approaches and decreasing the training time <span class="math inline">\(3\times\)</span> when compared to the vanilla Transformer. We expect even greater improvements in larger models - more thorough experiments are underway at the moment, and we plan to release the paper with more results in the coming weeks. In the meantime, you can contact us with any feedback you have at <a href="mailto:llm.random.team@gmail.com">llm.random.team@gmail.com</a>.<span class="SJ">add “or respond to the twitter thread here:”, maybe also “reply on reddit here:”</span> <span class="SJ">Can somebody check if this link actually works?</span></p>
+</section>
+<section id="acknowledgements" class="level1">
+<h1>Acknowledgements</h1>
+<p>We would like to express sincere gratitude to Piotr Padlewski and Tomasz Trzciński for valuable feedback and Dagmara Rudzińska for amazing support with graphic design.</p>
 
 
 
 </section>
 
 
-<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body" role="list">
 <div id="ref-BengioBPP15" class="csl-entry" role="listitem">
-Bengio, Emmanuel, Pierre-Luc Bacon, Joelle Pineau, and Doina Precup. 2015. <span>“Conditional Computation in Neural Networks for Faster Models.”</span> <em>CoRR</em>. <a href="http://arxiv.org/abs/1511.06297">http://arxiv.org/abs/1511.06297</a>.
+Emmanuel Bengio, Pierre-Luc Bacon, Joelle Pineau, and Doina Precup. 2015. <a href="http://arxiv.org/abs/1511.06297">Conditional computation in neural networks for faster models</a>.
 </div>
 <div id="ref-chi2022representation" class="csl-entry" role="listitem">
-Chi, Zewen, Li Dong, Shaohan Huang, Damai Dai, Shuming Ma, Barun Patra, Saksham Singhal, et al. 2022. <span>“On the Representation Collapse of Sparse Mixture of Experts.”</span> <a href="https://arxiv.org/abs/2204.09179">https://arxiv.org/abs/2204.09179</a>.
+Zewen Chi, Li Dong, Shaohan Huang, Damai Dai, Shuming Ma, Barun Patra, Saksham Singhal, Payal Bajaj, Xia Song, Xian-Ling Mao, Heyan Huang, and Furu Wei. 2022. <a href="https://arxiv.org/abs/2204.09179">On the representation collapse of sparse mixture of experts</a>.
 </div>
 <div id="ref-clark2022unified" class="csl-entry" role="listitem">
-Clark, Aidan, Diego de las Casas, Aurelia Guy, Arthur Mensch, Michela Paganini, Jordan Hoffmann, Bogdan Damoc, et al. 2022. <span>“Unified Scaling Laws for Routed Language Models.”</span> <a href="https://arxiv.org/abs/2202.01169">https://arxiv.org/abs/2202.01169</a>.
+Aidan Clark, Diego de las Casas, Aurelia Guy, Arthur Mensch, Michela Paganini, Jordan Hoffmann, Bogdan Damoc, Blake Hechtman, Trevor Cai, Sebastian Borgeaud, George van den Driessche, Eliza Rutherford, Tom Hennigan, Matthew Johnson, Katie Millican, Albin Cassirer, Chris Jones, Elena Buchatskaya, David Budden, et al. 2022. <a href="https://arxiv.org/abs/2202.01169">Unified scaling laws for routed language models</a>.
 </div>
 <div id="ref-dai2022stablemoe" class="csl-entry" role="listitem">
-Dai, Damai, Li Dong, Shuming Ma, Bo Zheng, Zhifang Sui, Baobao Chang, and Furu Wei. 2022. <span>“StableMoE: Stable Routing Strategy for Mixture of Experts.”</span> <a href="https://arxiv.org/abs/2204.08396">https://arxiv.org/abs/2204.08396</a>.
+Damai Dai, Li Dong, Shuming Ma, Bo Zheng, Zhifang Sui, Baobao Chang, and Furu Wei. 2022. <a href="https://arxiv.org/abs/2204.08396">StableMoE: Stable routing strategy for mixture of experts</a>.
 </div>
 <div id="ref-du2022glam" class="csl-entry" role="listitem">
-Du, Nan, Yanping Huang, Andrew M. Dai, Simon Tong, Dmitry Lepikhin, Yuanzhong Xu, Maxim Krikun, et al. 2022. <span>“GLaM: Efficient Scaling of Language Models with Mixture-of-Experts.”</span> <a href="https://arxiv.org/abs/2112.06905">https://arxiv.org/abs/2112.06905</a>.
+Nan Du, Yanping Huang, Andrew M. Dai, Simon Tong, Dmitry Lepikhin, Yuanzhong Xu, Maxim Krikun, Yanqi Zhou, Adams Wei Yu, Orhan Firat, Barret Zoph, Liam Fedus, Maarten Bosma, Zongwei Zhou, Tao Wang, Yu Emma Wang, Kellie Webster, Marie Pellat, Kevin Robinson, et al. 2022. <a href="https://arxiv.org/abs/2112.06905">GLaM: Efficient scaling of language models with mixture-of-experts</a>.
 </div>
 <div id="ref-fedus2022switch" class="csl-entry" role="listitem">
-Fedus, William, Barret Zoph, and Noam Shazeer. 2022. <span>“Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity.”</span> <a href="https://arxiv.org/abs/2101.03961">https://arxiv.org/abs/2101.03961</a>.
+William Fedus, Barret Zoph, and Noam Shazeer. 2022. <a href="https://arxiv.org/abs/2101.03961">Switch transformers: Scaling to trillion parameter models with simple and efficient sparsity</a>.
 </div>
 <div id="ref-hoffmann2022training" class="csl-entry" role="listitem">
-Hoffmann, Jordan, Sebastian Borgeaud, Arthur Mensch, Elena Buchatskaya, Trevor Cai, Eliza Rutherford, Diego de Las Casas, et al. 2022. <span>“Training Compute-Optimal Large Language Models.”</span> <a href="https://arxiv.org/abs/2203.15556">https://arxiv.org/abs/2203.15556</a>.
+Jordan Hoffmann, Sebastian Borgeaud, Arthur Mensch, Elena Buchatskaya, Trevor Cai, Eliza Rutherford, Diego de Las Casas, Lisa Anne Hendricks, Johannes Welbl, Aidan Clark, Tom Hennigan, Eric Noland, Katie Millican, George van den Driessche, Bogdan Damoc, Aurelia Guy, Simon Osindero, Karen Simonyan, Erich Elsen, et al. 2022. <a href="https://arxiv.org/abs/2203.15556">Training compute-optimal large language models</a>.
 </div>
 <div id="ref-jaszczur2021sparse" class="csl-entry" role="listitem">
-Jaszczur, Sebastian, Aakanksha Chowdhery, Afroz Mohiuddin, Łukasz Kaiser, Wojciech Gajewski, Henryk Michalewski, and Jonni Kanerva. 2021. <span>“Sparse Is Enough in Scaling Transformers.”</span> <a href="https://arxiv.org/abs/2111.12763">https://arxiv.org/abs/2111.12763</a>.
+Sebastian Jaszczur, Aakanksha Chowdhery, Afroz Mohiuddin, Łukasz Kaiser, Wojciech Gajewski, Henryk Michalewski, and Jonni Kanerva. 2021. <a href="https://arxiv.org/abs/2111.12763">Sparse is enough in scaling transformers</a>.
 </div>
 <div id="ref-kaplan2020scaling" class="csl-entry" role="listitem">
-Kaplan, Jared, Sam McCandlish, Tom Henighan, Tom B. Brown, Benjamin Chess, Rewon Child, Scott Gray, Alec Radford, Jeffrey Wu, and Dario Amodei. 2020. <span>“Scaling Laws for Neural Language Models.”</span> <a href="https://arxiv.org/abs/2001.08361">https://arxiv.org/abs/2001.08361</a>.
+Jared Kaplan, Sam McCandlish, Tom Henighan, Tom B. Brown, Benjamin Chess, Rewon Child, Scott Gray, Alec Radford, Jeffrey Wu, and Dario Amodei. 2020. <a href="https://arxiv.org/abs/2001.08361">Scaling laws for neural language models</a>.
 </div>
 <div id="ref-base" class="csl-entry" role="listitem">
-Lewis, Mike, Shruti Bhosale, Tim Dettmers, Naman Goyal, and Luke Zettlemoyer. 2021. <span>“<span>BASE</span> Layers: Simplifying Training of Large, Sparse Models.”</span> <em>CoRR</em>. <a href="https://arxiv.org/abs/2103.16716">https://arxiv.org/abs/2103.16716</a>.
+Mike Lewis, Shruti Bhosale, Tim Dettmers, Naman Goyal, and Luke Zettlemoyer. 2021. <a href="https://arxiv.org/abs/2103.16716"><span>BASE</span> layers: Simplifying training of large, sparse models</a>.
 </div>
 <div id="ref-muqeeth2023soft" class="csl-entry" role="listitem">
-Muqeeth, Mohammed, Haokun Liu, and Colin Raffel. 2023. <span>“Soft Merging of Experts with Adaptive Routing.”</span> <a href="https://arxiv.org/abs/2306.03745">https://arxiv.org/abs/2306.03745</a>.
+Mohammed Muqeeth, Haokun Liu, and Colin Raffel. 2023. <a href="https://arxiv.org/abs/2306.03745">Soft merging of experts with adaptive routing</a>.
 </div>
 <div id="ref-mustafa2022multimodal" class="csl-entry" role="listitem">
-Mustafa, Basil, Carlos Riquelme, Joan Puigcerver, Rodolphe Jenatton, and Neil Houlsby. 2022. <span>“Multimodal Contrastive Learning with LIMoE: The Language-Image Mixture of Experts.”</span> <a href="https://arxiv.org/abs/2206.02770">https://arxiv.org/abs/2206.02770</a>.
+Basil Mustafa, Carlos Riquelme, Joan Puigcerver, Rodolphe Jenatton, and Neil Houlsby. 2022. <a href="https://arxiv.org/abs/2206.02770">Multimodal contrastive learning with LIMoE: The language-image mixture of experts</a>.
 </div>
 <div id="ref-nawrot2022hierarchical" class="csl-entry" role="listitem">
-Nawrot, Piotr, Szymon Tworkowski, Michał Tyrolski, Łukasz Kaiser, Yuhuai Wu, Christian Szegedy, and Henryk Michalewski. 2022. <span>“Hierarchical Transformers Are More Efficient Language Models.”</span> <a href="https://arxiv.org/abs/2110.13711">https://arxiv.org/abs/2110.13711</a>.
-</div>
-<div id="ref-puigcerver2023sparse" class="csl-entry" role="listitem">
-Puigcerver, Joan, Carlos Riquelme, Basil Mustafa, and Neil Houlsby. 2023. <span>“From Sparse to Soft Mixtures of Experts.”</span> <a href="https://arxiv.org/abs/2308.00951">https://arxiv.org/abs/2308.00951</a>.
+Piotr Nawrot, Szymon Tworkowski, Michał Tyrolski, Łukasz Kaiser, Yuhuai Wu, Christian Szegedy, and Henryk Michalewski. 2022. <a href="https://arxiv.org/abs/2110.13711">Hierarchical transformers are more efficient language models</a>.
 </div>
 <div id="ref-rae2022scaling" class="csl-entry" role="listitem">
-Rae, Jack W., Sebastian Borgeaud, Trevor Cai, Katie Millican, Jordan Hoffmann, Francis Song, John Aslanides, et al. 2022. <span>“Scaling Language Models: Methods, Analysis &amp; Insights from Training Gopher.”</span> <a href="https://arxiv.org/abs/2112.11446">https://arxiv.org/abs/2112.11446</a>.
+Jack W. Rae, Sebastian Borgeaud, Trevor Cai, Katie Millican, Jordan Hoffmann, Francis Song, John Aslanides, Sarah Henderson, Roman Ring, Susannah Young, Eliza Rutherford, Tom Hennigan, Jacob Menick, Albin Cassirer, Richard Powell, George van den Driessche, Lisa Anne Hendricks, Maribeth Rauh, Po-Sen Huang, et al. 2022. <a href="https://arxiv.org/abs/2112.11446">Scaling language models: Methods, analysis &amp; insights from training gopher</a>.
 </div>
 <div id="ref-2019t5" class="csl-entry" role="listitem">
-Raffel, Colin, Noam Shazeer, Adam Roberts, Katherine Lee, Sharan Narang, Michael Matena, Yanqi Zhou, Wei Li, and Peter J. Liu. 2019. <span>“Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer.”</span> <em>arXiv e-Prints</em>. <a href="https://arxiv.org/abs/1910.10683">https://arxiv.org/abs/1910.10683</a>.
+Colin Raffel, Noam Shazeer, Adam Roberts, Katherine Lee, Sharan Narang, Michael Matena, Yanqi Zhou, Wei Li, and Peter J. Liu. 2019. <a href="https://arxiv.org/abs/1910.10683">Exploring the limits of transfer learning with a unified text-to-text transformer</a>. <em>arXiv e-prints</em>.
 </div>
 <div id="ref-bpr" class="csl-entry" role="listitem">
-Riquelme, Carlos, Joan Puigcerver, Basil Mustafa, Maxim Neumann, Rodolphe Jenatton, André Susano Pinto, Daniel Keysers, and Neil Houlsby. 2021. <span>“Scaling Vision with Sparse Mixture of Experts.”</span> <em>CoRR</em>. <a href="https://arxiv.org/abs/2106.05974">https://arxiv.org/abs/2106.05974</a>.
+Carlos Riquelme, Joan Puigcerver, Basil Mustafa, Maxim Neumann, Rodolphe Jenatton, André Susano Pinto, Daniel Keysers, and Neil Houlsby. 2021. <a href="https://arxiv.org/abs/2106.05974">Scaling vision with sparse mixture of experts</a>.
 </div>
 <div id="ref-04426" class="csl-entry" role="listitem">
-Roller, Stephen, Sainbayar Sukhbaatar, Arthur Szlam, and Jason Weston. 2021. <span>“Hash Layers for Large Sparse Models.”</span> <em>CoRR</em>. <a href="https://arxiv.org/abs/2106.04426">https://arxiv.org/abs/2106.04426</a>.
+Stephen Roller, Sainbayar Sukhbaatar, Arthur Szlam, and Jason Weston. 2021. <a href="https://arxiv.org/abs/2106.04426">Hash layers for large sparse models</a>.
 </div>
 <div id="ref-shazeer2017outrageously" class="csl-entry" role="listitem">
-Shazeer, Noam, Azalia Mirhoseini, Krzysztof Maziarz, Andy Davis, Quoc Le, Geoffrey Hinton, and Jeff Dean. 2017. <span>“Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer.”</span> <a href="https://arxiv.org/abs/1701.06538">https://arxiv.org/abs/1701.06538</a>.
+Noam Shazeer, Azalia Mirhoseini, Krzysztof Maziarz, Andy Davis, Quoc Le, Geoffrey Hinton, and Jeff Dean. 2017. <a href="https://arxiv.org/abs/1701.06538">Outrageously large neural networks: The sparsely-gated mixture-of-experts layer</a>.
 </div>
 <div id="ref-zhou2022mixtureofexperts" class="csl-entry" role="listitem">
-Zhou, Yanqi, Tao Lei, Hanxiao Liu, Nan Du, Yanping Huang, Vincent Zhao, Andrew Dai, Zhifeng Chen, Quoc Le, and James Laudon. 2022. <span>“Mixture-of-Experts with Expert Choice Routing.”</span> <a href="https://arxiv.org/abs/2202.09368">https://arxiv.org/abs/2202.09368</a>.
+Yanqi Zhou, Tao Lei, Hanxiao Liu, Nan Du, Yanping Huang, Vincent Zhao, Andrew Dai, Zhifeng Chen, Quoc Le, and James Laudon. 2022. <a href="https://arxiv.org/abs/2202.09368">Mixture-of-experts with expert choice routing</a>.
 </div>
 </div></section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
 

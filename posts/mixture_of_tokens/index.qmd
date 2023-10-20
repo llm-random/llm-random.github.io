@@ -48,7 +48,7 @@ affiliations:
         name: Nomagic
 date: "2023-10-06"
 bibliography: bibliography.bib
-# csl: apa.csl
+csl: apa.csl
 # date-modified: "2023-09-29"
 categories: []
 image: "logo_mot.png"
@@ -186,8 +186,6 @@ format:
 ### TL;DR
 
 
-
-
 We introduce Mixture of Tokens, a novel, fully-differentiable Transformer architecture that allows for increasing the number of model parameters while keeping the computation cost constant.
 
 * It avoids problems typical for Mixture of Experts architectures
@@ -200,7 +198,7 @@ Mixture of Experts (MoE) architectures have recently garnered considerable atten
 
 This technique comes at a cost, though: the operation of choosing the most suitable experts for a given token is discrete, and learning discrete choices is difficult; the models are known to suffer from issues including training instability and expert under- and overload. While some of those problems can be alleviated with, e.g., the use of various auxiliary losses or reduced initialization scale, it is certain that existing MoE techniques are more difficult and less intuitive to train than dense counterparts. 
 
-Aiming to avoid these problems, we propose **Mixture of Tokens**: a new, fully-differentiable type of architecture that retains all efficiency benefits of MoE and alleviates the aforementioned problems by _mixing tokens_ before feeding them into the feed-forward layer instead of routing tokens to experts, in effect allowing the model to simultaneously learn from all token-expert combinations. Crucially, this technique is fully compatible with both masked and causal LLM training.    
+Aiming to avoid these problems, we propose **Mixture of Tokens**: a new, fully-differentiable type of architecture that retains all efficiency benefits of MoE and avoids the the aforementioned problems by, instead of routing tokens to experts, mixing tokens from **different examples** before feeding them into experts, in effect allowing the model to simultaneously learn from all token-expert combinations. Importantly, mixing can be disabled to avoid mixing of different sequences during inference. Crucially, this technique is fully compatible with both masked and causal LLM training.    
 
 [GENERAL TODOS: grammarly, go over and rephrase, align and make clearer the Methods section, make mail, tweet, settle on contribution attributions, ]{.SA}
 
@@ -249,7 +247,7 @@ More recently, [@zhou2022mixtureofexperts] proposed Expert Choice, where, in con
 There are a number of works that try to improve the stability and quality of the controller, including methods based on reinforcement learning [@BengioBPP15], routing by hashing [@04426], optimal transport [@clark2022unified], and more [@dai2022stablemoe; @chi2022representation]. 
 [@base] address the load balancing problem by linear programming while [@bpr] tries to achieve this by learning to drop unimportant tokens. 
 
-Concurrently to our work, [@puigcerver2023sparse] proposed a continuous variant of Mixture of Experts for the Vision Transformer, limited to encoder-only models. Another approach allowing to avoid discrete operations in MoE by merging experts was presented in [@muqeeth2023soft].   
+Concurrently to our work, (Puigcerver et al. 2023) proposed a continuous variant of Mixture of Experts for the Vision Transformer, limited to encoder-only models where patches are mixed only within each image. Another approach allowing to avoid discrete operations in MoE by merging experts was presented in [@muqeeth2023soft].   
 
 
 # Method {#sec-method}
@@ -470,4 +468,7 @@ We expect allowing the temperature to be learned at the end of training to be a 
 We have shown the preliminary results showing the promise of Mixture of Tokens improving the stability of training in comparison with MoE approaches and decreasing the training time $3\times$ when compared to the vanilla Transformer.
 We expect even greater improvements in larger models - more thorough experiments are underway at the moment, and we plan to release the paper with more results in the coming weeks. In the meantime, you can contact us with any feedback you have at [llm.random.team@gmail.com](mailto:llm.random.team@gmail.com).[add "or respond to the twitter thread here: ", maybe also "reply on reddit here:"]{.SJ} [Can somebody check if this link actually works?]{.SJ}
 
+
+# Acknowledgements
+We would like to express sincere gratitude to Piotr Padlewski and Tomasz Trzciński for valuable feedback and Dagmara Rudzińska for amazing support with graphic design.
 
