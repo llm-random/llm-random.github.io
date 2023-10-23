@@ -5,47 +5,43 @@ author:
     -   name: Szymon Antoniak&nbsp;\*
         equal-contributor: true
         affiliations:
-        -   ref: ideas
-        -   ref: uow
+        -   ref: id_uow
     -   name: Sebastian Jaszczur&nbsp;\*&nbsp;†
         affiliations:
-        -   ref: ideas
-        -   ref: uow
+        -   ref: id_uow
     -   name: Michał Krutul
         equal-contributor: true
         affiliations:
-        -   ref: ideas
-        -   ref: uow
+        -   ref: id_uow
     -   name: Maciej Pióro
         equal-contributor: true
         affiliations:
-        -   ref: ideas
-        -   ref: uow
+        -   ref: id_uow
     -   name: Jakub Krajewski
         equal-contributor: true
         affiliations:
-        -   ref: ideas
-        -   ref: uow
+        -   ref: id_uow
     -   name: Jan Ludziejewski
         equal-contributor: true
         affiliations:
-        -   ref: ideas
-        -   ref: uow
+        -   ref: id_uow
     -   name: Tomasz Odrzygóźdź
         affiliations:
-        -   ref: ideas
-        -   ref: uow
+        -   ref: id_uow
     -   name: Marek Cygan&nbsp;‡
         affiliations:
-        -   ref: uow
-        -   ref: nomagic
+        -   ref: uow_nomagic
 affiliations:
+    -   id: id_uow
+        name: IDEAS NCBR; University of Warsaw
     -   id: ideas
         name: IDEAS NCBR
     -   id: uow
         name: University of Warsaw
     -   id: nomagic
         name: Nomagic
+    -   id: uow_nomagic
+        name: University of Warsaw; Nomagic
 date: "2023-10-06"
 bibliography: bibliography.bib
 csl: apa.csl
