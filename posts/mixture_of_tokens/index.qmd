@@ -16,7 +16,7 @@ author:
     -   name: Maciej Pióro
         equal-contributor: true
         affiliations:
-        -   ref: id_uow
+        -   ref: id_pan
     -   name: Jakub Krajewski
         equal-contributor: true
         affiliations:
@@ -27,21 +27,23 @@ author:
         -   ref: id_uow
     -   name: Tomasz Odrzygóźdź
         affiliations:
-        -   ref: id_uow
+        -   ref: ideas
     -   name: Marek Cygan&nbsp;‡
         affiliations:
         -   ref: uow_nomagic
 affiliations:
     -   id: id_uow
-        name: IDEAS NCBR; University of Warsaw
+        name: IDEAS NCBR, University of Warsaw
     -   id: ideas
         name: IDEAS NCBR
+    -   id: id_pan
+        name: IDEAS NCBR, Polish Academy of Sciences
     -   id: uow
         name: University of Warsaw
     -   id: nomagic
         name: Nomagic
     -   id: uow_nomagic
-        name: University of Warsaw; Nomagic
+        name: University of Warsaw, Nomagic
 date: "2023-10-06"
 bibliography: bibliography.bib
 csl: apa.csl
@@ -187,7 +189,7 @@ We introduce Mixture of Tokens, a novel, fully-differentiable Transformer archit
 * It avoids problems typical for Mixture of Experts architectures
 * It is compatible with causal and masked Large Language Models
 * Our PoC model achieves the same performance as the baseline Transformer with $3\times$&nbsp;wall-clock speedup and $4\times$&nbsp;FLOPS reduction
-* We have published our initial results to [Arxiv](https://arxiv.org/abs/2310.15961)
+* See the initial [arXiv version](https://arxiv.org/abs/2310.15961) for reference and citation info
 
 
 # Introduction      
@@ -469,3 +471,6 @@ We expect even greater improvements in larger models - more thorough experiments
 # Acknowledgements
 We would like to express sincere gratitude to Piotr Padlewski and Tomasz Trzciński for valuable feedback and Dagmara Rudzińska for amazing support with graphic design.
 
+# Citation Information
+
+Please cite the [arXiv version](https://arxiv.org/abs/2310.15961) of this work.
