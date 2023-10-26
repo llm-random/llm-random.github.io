@@ -187,6 +187,7 @@ We introduce Mixture of Tokens, a novel, fully-differentiable Transformer archit
 * It avoids problems typical for Mixture of Experts architectures
 * It is compatible with causal and masked Large Language Models
 * Our PoC model achieves the same performance as the baseline Transformer with $3\times$&nbsp;wall-clock speedup and $4\times$&nbsp;FLOPS reduction
+* We have published our initial results to [Arxiv](https://arxiv.org/abs/2310.15961)
 
 
 # Introduction      
