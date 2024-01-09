@@ -5,7 +5,8 @@ project:
 website:
   title: "llm-random"
   google-analytics: G-QHXJCKXK7M
-    
+  margin-header: subscribe_side.html
+
   navbar:
     right:
       - about.qmd

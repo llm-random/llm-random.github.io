@@ -20,19 +20,20 @@ TODO:
 * add twitter/linkedin handles etc.
 * what is IDEAS NCBR, link
 * add research statement, like https://kindly-cartoon-566.notion.site/Informal-research-statement-Piotr-Mi-o-5008a7f6f9c24e6c88a4ba35971d6196 
-
 -->
 
-Blog of LLM-Random research group in [IDEAS NCBR](https://ideas-ncbr.pl/en/), started in mid-2022 by Sebastian Jaszczur. Members, in the order of joining, listed below. We are happy to collaborate with outside institutions.
+Blog of LLM-Random research group in [IDEAS NCBR](https://ideas-ncbr.pl/en/), started in mid-2022 by Sebastian Jaszczur. Team members, in the order of joining, listed below. We are happy to collaborate with outside institutions and people.
 
 * Sebastian Jaszczur
-* Marek Cygan (as advisor)
+* Marek Cygan, as advisor
 * Jakub Krajewski
-* Szymon Antoniak
+* Szymon Antoniak (past member)
 * Maciej Pióro
-* Tomasz Odrzygóźdź
+* Tomasz Odrzygóźdź (past member)
 * Jan Ludziejewski
 * Michał Krutul
+* Kamil Ciebiera
+* Krystian Król
 
 Public repositories of the group are available at [on GitHub](https://github.com/llm-random/).
 

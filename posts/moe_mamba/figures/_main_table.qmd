@@ -1,0 +1,10 @@
+|Model | \# Parameters | \# Active Parameters per Token |  Loss After 100k Steps | % Steps to Transformer Loss | % Steps to Vanilla Mamba Loss |
+|---|---|---|---|---|---|
+|Transformer | 25M | 25M | 3.66 | 100\% |  >100\% |
+|Mamba-MLP | 26M | 26M | 3.56 | 38\% | >100\% |
+|Tranformer-MoE | 545M | 25M | 3.54 | 42\% | >100\% |
+|Vanilla Mamba | 27M | 27M | 3.51 | 30\% | 100\% |
+|Mamba-MoE | 416M | 26M | **3.41** | **21%** | **46%** |
+
+: Results of comparison between different architectures after 100k steps. Note that the parameter counts exclude embedding and
+unembedding layers. {#tbl-main-table}

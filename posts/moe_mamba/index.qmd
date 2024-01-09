@@ -27,7 +27,7 @@ bibliography: bibliography.bib
 csl: apa.csl
 # date-modified: "2023-09-29"
 categories: []
-image: "logo_mot.png"
+image: "logo_moemamba.png"
 format:
   html:
     template-partials:
@@ -159,25 +159,27 @@ format:
 <!-- [We introduce Mixture of Tokens, a new, fully-differentiable Transformer architecture that builds on top of Sparse Mixture of Tokens, while avoiding problems that stem from sparsity.
 ]{.Listing} -->
 
+See also [arXiv version](https://arxiv.org/abs/2401.04081).
+
 # Abstract      
 State Space Models (SSMs) have become serious contenders in the field of sequential modeling, challenging the dominance of Transformers. At the same time, Mixture of Experts (MoE) has significantly improved Transformer-based LLMs, including recent state-of-the-art open-source models. We propose that to unlock the potential of SSMs for scaling, they should be combined with MoE. We showcase this on Mamba, a recent SSM-based model that achieves remarkable, Transformer-like performance. Our model, MoE-Mamba, outperforms both Mamba and Transformer-MoE. In particular, MoE-Mamba reaches the same performance as Mamba in **2.2x less training steps** while preserving the inference performance gains of Mamba against the Transformer.
 
-![Figure 1. Log perplexity throughout the training of different methods. From top to bottom: Transformer; Mamba interleaved with feed-forward layers (Mamba-MLP); Transformer-Moe; Vanilla Mamba; MoE-Mamba.](figures/architecture_comparison.png)
+![Log perplexity throughout the training of different methods. From top to bottom: Transformer; Mamba interleaved with feed-forward layers (Mamba-MLP); Transformer-Moe; Vanilla Mamba; MoE-Mamba.](figures/architecture_comparison.png){#fig-figure1}
 
 # Introduction
-State Space Models (SSMs), e.g. [@gu2021combining,@gu2022efficiently,@gu2023mamba], have recently been gaining attention as a possible alternative to Transformers due to linear-time inference, parallelizable training, and strong performance on long-context tasks. In particular, Mamba introduced in [@gu2023mamba] achieves excellent results through the use of selective SSMs and hardware-aware design, being a promising alternative to the attention-based Transformer architecture.
+State Space Models (SSMs), e.g. [@gu2021combining;@gu2022efficiently;@gu2023mamba], have recently been gaining attention as a possible alternative to Transformers due to linear-time inference, parallelizable training, and strong performance on long-context tasks. In particular, Mamba introduced in [@gu2023mamba] achieves excellent results through the use of selective SSMs and hardware-aware design, being a promising alternative to the attention-based Transformer architecture.
 
-In this paper, we advocate that to unlock the potential of SSMs for scaling up, they should be combined with Mixture of Experts (MoE). MoEs [@fedus2022switch,@sanseviero2023moe] are efficient techniques that are now routinely used for scaling up Transformers, e.g., in the recent Mixtral model [@Mixtral].
+In this paper, we advocate that to unlock the potential of SSMs for scaling up, they should be combined with Mixture of Experts (MoE). MoEs [@fedus2022switch;@sanseviero2023moe] are efficient techniques that are now routinely used for scaling up Transformers, e.g., in the recent Mixtral model [@Mixtral].
 
 We introduce **MoE-Mamba**, a model that combines Mamba with a Mixture of Experts layer. MoE-Mamba enables efficiency gains of both SSMs and MoE. We also show that MoE-Mamba acts predictably when the number of experts varies ([Section Ablations](#sec-ablations)).
 
-Our experiments, see Figure 1, confirm that MoE-Mamba requires **2.2x less** training steps to achieve the same performance as Mamba and shows potential gains over Transformer and Transformer-MoE. The preliminary results indicate a very promising research direction that may allow scaling SSMs to tens of billions of parameters.
+Our experiments, see [Figure 1](#fig-figure1), confirm that MoE-Mamba requires **2.2x less** training steps to achieve the same performance as Mamba and shows potential gains over Transformer and Transformer-MoE. The preliminary results indicate a very promising research direction that may allow scaling SSMs to tens of billions of parameters.
 
 # Related Work
 
 ## State Space Models
-State Space Models **SSMs** form a family of architectures used for sequence modeling. Stemming from the field of control theory, these models can be seen as a combination of RNNs and CNNs [@gu2023mamba]. Although they potentially offer considerable benefits, a number of issues have been identified with SSMs [@gu2022efficiently], preventing SSMs from becoming the leading architecture in the task of language modeling. However, recent breakthroughs [@gu2022efficiently,@fu2023hungry,@smith2023simplified], have allowed deep SSMs to be scaled to billions of parameters while retaining computational efficiency and strong performance.
-
+State Space Models (**SSMs**) form a family of architectures used for sequence modeling. Stemming from the field of control theory, these models can be seen as a combination of RNNs and CNNs [@gu2023mamba]. Although they potentially offer considerable benefits, a number of issues have been identified with SSMs [@gu2022efficiently], preventing SSMs from becoming the leading architecture in the task of language modeling. However, recent breakthroughs [@gu2022efficiently;@fu2023hungry;@smith2023simplified], have allowed deep SSMs to be scaled to billions of parameters while retaining computational efficiency and strong performance.
+ 
 ## Mamba
 Building on SSMs, Mamba [@gu2023mamba] offers linear-time inference (with respect to the context length) and an efficient training process via hardware-aware design. By employing a work-efficient parallel scan, Mamba mitigates the impact of the sequential nature of recurrence, whereas fusing GPU operations removes the requirement to materialize the expanded state. Intermediate states necessary for backpropagation are not saved but instead recomputed during the backward pass, thus reducing memory requirements. The advantages of Mamba over the attention mechanism are especially prominent during inference, as not only the computational complexity is lowered, but also the memory usage is not dependent on the context
 length. 
@@ -191,24 +193,23 @@ Mamba's performance is showcased through its ability to efficiently utilize long
 ## Mixture of Experts
 Mixture of Experts (MoE) is a class of techniques that allow drastically increasing the number of parameters of a model without much impact on the FLOPs required for the model's inference and training. Introduced in [@moe1991], MoE was applied in the context of NLP by [@shazeer2017outrageously].
 
-MoE models benefit from sparse activation - for each token processed, only a subset of the model's parameters is used. Due to their computational demands, \ff layers in Transformers have become the standard target of various MoE techniques [@lepikhin2020gshard,@fedus2022switch].
+MoE models benefit from sparse activation - for each token processed, only a subset of the model's parameters is used. Due to their computational demands, \ff layers in Transformers have become the standard target of various MoE techniques [@lepikhin2020gshard;@fedus2022switch].
 
 A number of approaches have been proposed to address the core problem of MoE, i.e., the process of assigning tokens to experts (_routing_). Two basic routing algorithms include 
 _Token Choice_ [@shazeer2017outrageously] (each token is routed to a constant number of experts $K$) and
-_Expert Choice_ [@zhou2022mixtureofexperts] (the number of tokens routed to each expert is constant across experts). Switch [@fedus2022switch] is a Token Choice architecture that routes each token to a single expert ($K=1$) and has successfully been used to scale Transformers up to 1.6T parameters. In our experiments, we follow this MoE design. % with some small changes. \sj{What changes?}
+_Expert Choice_ [@zhou2022mixtureofexperts] (the number of tokens routed to each expert is constant across experts). Switch [@fedus2022switch] is a Token Choice architecture that routes each token to a single expert ($K=1$) and has successfully been used to scale Transformers up to 1.6T parameters. In our experiments, we follow this MoE design.
 
-More recently, MoE models have found their way onto the open-source scene [@openmoe2023,@fedus2022switch]. In particular, Mistral has open-sourced Mixtral 8$\times$7B [@Mixtral] that fares comparably to LLaMa 2 70B [@touvron2023llama] while requiring only around 1/6th of its inference computational budget.
+More recently, MoE models have found their way onto the open-source scene [@openmoe2023;@fedus2022switch]. In particular, Mistral has open-sourced Mixtral 8x7B [@Mixtral] that fares comparably to LLaMa 2 70B [@touvron2023llama] while requiring only around 1/6th of its inference computational budget.
 
-# Model Architecture
-{#sec-architecture}
-Although the main underlying mechanism of Mamba differs significantly from the attention mechanism used in Transformers, Mamba retains the high-level, block-based structure of Transformer models. In this paradigm, identical blocks comprising one or more layers are stacked one after another, with each layer's output being added to the residual stream (Figure [ref:designs_alt]). The final value of the residual stream can subsequently be used to predict the next token in the language modeling task. 
+# Model Architecture {#sec-architecture}
+Although the main underlying mechanism of Mamba differs significantly from the attention mechanism used in Transformers, Mamba retains the high-level, block-based structure of Transformer models. In this paradigm, identical blocks comprising one or more layers are stacked one after another, with each layer's output being added to the residual stream ([Figure 2](#fig-designs_alt)). The final value of the residual stream can subsequently be used to predict the next token in the language modeling task. 
 
-In our design, we leverage the compatibility of the two architectures. In **MoE-Mamba**, every other Mamba layer is replaced with a MoE feed-forward (FF) layer based on Switch [@fedus2022switch], as shown in Figure [ref:designs_alt]. We note some similarities of this design to one of the approaches explored by [@gu2023mamba], in which interleaving Mamba layers with FF layers resulted in a small decrease in performance compared to vanilla Mamba. This setup is denoted as Mamba-MLP in Figure [ref:figure1].
+In our design, we leverage the compatibility of the two architectures. In **MoE-Mamba**, every other Mamba layer is replaced with a MoE feed-forward (FF) layer based on Switch [@fedus2022switch], as shown in [Figure 2](#fig-designs_alt). We note some similarities of this design to one of the approaches explored by [@gu2023mamba], in which interleaving Mamba layers with FF layers resulted in a small decrease in performance compared to vanilla Mamba. This setup is denoted as Mamba-MLP in [Figure 1](#fig-figure1).
 
-MoE-Mamba separates unconditional processing of every token by the Mamba layer - which can efficiently integrate the whole context of the sequence into an internal representation - and conditional processing by a MoE layer that can apply the most relevant expert for each token. The idea of interleaving conditional and unconditional processing is used in some MoE-based models, typically by alternating vanilla and MoE FF layers [@lepikhin2020gshard,@fedus2022switch].
+MoE-Mamba separates unconditional processing of every token by the Mamba layer - which can efficiently integrate the whole context of the sequence into an internal representation - and conditional processing by a MoE layer that can apply the most relevant expert for each token. The idea of interleaving conditional and unconditional processing is used in some MoE-based models, typically by alternating vanilla and MoE feed-forward layers [@lepikhin2020gshard;@fedus2022switch].
 
 
-![Figure ?. Diagrams of the architectures. From the left: vanilla Transformer, MoE Transformer, Mamba, MoE-Mamba.](figures/all_designs_simple.png)
+![Diagrams of the architectures. From the left: vanilla Transformer, MoE Transformer, Mamba, MoE-Mamba.](figures/all_designs_simple.png){#fig-designs_alt}
 
 
 ## Alternative Designs
@@ -221,63 +222,33 @@ In addition to the experiments related to interleaving Mamba with MoE, we also c
 
 
 We compare 5 different settings: vanilla Transformer, Mamba, Mamba-MLP, MoE and MoE-Mamba. 
-% With the exception of Mamba, two types of layers interleave in all architectures. 
 In most Transformers, the feed-forward layer contains $8dm^2$ parameters, whereas [@gu2023mamba] makes Mamba layers smaller (ca. $6dm^2$) so that two Mamba layers match the combined parameter count of a feed-forward layer and an attention mechanism. 
 To keep the number of active parameters per token roughly the same in Mamba and in our model, we scale down the size of each expert feed-forward layer to $6dm^2$.
 Excluding embedding and unembedding layers, all models access around 26M parameters per token. We train the models on approximately 6.5B tokens and 100k steps.
 
-We train the model using the English C4 dataset [@raffel2020exploring] on the task of next token prediction. The text is tokenized using GPT2 tokenizer [@radford2019language]. LR was tuned for vanilla Mamba (see Appendix, [Section](#sec-lr_tuning) and re-used for all other training runs. For a full rundown of hyperparameters, see Table \ref{tab:arch_details}.
+We train the model using the English C4 dataset [@raffel2020exploring] on the task of next token prediction. The text is tokenized using GPT2 tokenizer [@radford2019language]. LR was tuned for vanilla Mamba (see Appendix, [Section](#sec-lr_tuning) and re-used for all other training runs. For a full rundown of hyperparameters, see the [hyperparameters table](#hyperparameters-table).
 
-![Figure ?. Training loss for a differing number of experts.](figures/comparison_experts.png)
+![Training loss for a differing number of experts.](figures/comparison_experts.png){#fig-experts_comparison}
 
 
 ## Results
 
-\begin{table}[h]
-    \centering
-    \begin{tabular}{c|c|c|c|c|c}
-        Model & \# Parameters & \thead{\# Active Parameters \\ per Token} &  \thead{Loss After \\ 100k Steps} & \thead{\% Steps to \\ Transformer Loss} & \thead{\% Steps to\\ Vanilla Mamba Loss} \\
-        \hline
-        Transformer & 25M & 25M & 3.66 & 100\% &  $>$100\% \\
-        Mamba-MLP & 26M & 26M & 3.56 & 38\% & $>$100\% \\
-        Tranformer-MoE & 545M & 25M & 3.54 & 42\% & $>$100\% \\
-        Vanilla Mamba & 27M & 27M & 3.51 & 30\% & 100\% \\
-        MoE-Mamba & 416M & 26M & \textbf{3.41} & \textbf{21\%} & \textbf{46\%} \\
-    \end{tabular}
-    \caption{Results of comparison between different architectures after 100k steps. Note that the parameter counts exclude embedding and unembedding layers.}
-    \label{tab:results}
-\end{table}
+{{< include figures/_main_table.qmd >}}
 
-Table \ref{tab:results} presents the results of training. 
+@tbl-main-table presents the results of training. 
 MoE-Mamba shows a remarkable improvement over the vanilla Mamba model. 
 Notably, MoE-Mamba was able to achieve the same performance as vanilla Mamba in just 46\% of training steps.
 Because the learning rate was tuned for vanilla Mamba (see Appendix, [Section LR Tuning](#sec-lr_tuning), we expect even better performance if the training procedure is optimized for MoE-Mamba.
-% this result is actually a lower bound on the performance of MoE-Mamba compared to vanilla Mamba.
 Like [@gu2023mamba], we observe that Mamba-MLP achieves slightly worse performance than vanilla Mamba.
 
 # Ablations {#sec-ablations}
 
-\begin{table}[h]
-    \centering
-    \begin{tabular}{c|c|c|c|c}
-        Number of Experts & \# Parameters & \thead{\# Active Parameters \\ per Token} & \thead{Loss After \\ 100k Steps} & \thead{\% Steps to \\ Vanilla Mamba Loss}  \\
-        \hline
-        N/A - Vanilla Mamba & 27M & 27M & 3.51 & 100 \% \\
-        1 (Mamba-MLP) & 26M & 26M & 3.56 & $>$100\% \\
-        4 experts & 64M & 26M & 3.55 & $>$100\% \\
-        8 experts & 114M & 26M & 3.51 & 91\% \\
-        16 experts & 215M & 26M & 3.45 & 56\% \\
-        32 experts & 416M & 26M & \textbf{3.41}  & \textbf{46\%} \\
-    \end{tabular}
-    \caption{Loss after 100k steps for different numbers of experts. Note that the parameter counts exclude embedding and unembedding layers.}
-    \label{tab:experts_results}
-\end{table}
-
+{{< include figures/_ablations.qmd >}}
 
 To assess whether Mamba scales well as the number of experts increases, we compare different numbers of experts in our model.
 For reference, we also include Mamba and Mamba-MLP (the latter is equivalent to MoE-Mamba with a single expert).
-Figure \ref{fig:experts_comparison} shows the training runs for different numbers of experts. 
-Table \ref{tab:experts_results} shows results after 100k steps. 
+[Figure 3](#fig-experts_comparison) shows the training runs for different numbers of experts. 
+@tbl-num-experts shows results after 100k steps. 
 The results show that our approach scales well with the number of experts. If the number of experts is 8 or more, our model achieves better final performance than vanilla Mamba.
 Since Mamba-MLP is worse than vanilla Mamba, we should expect MoE-Mamba with a small number of experts to exhibit poorer performance than Mamba.
 We obtain the best result with 32 experts. 
@@ -289,12 +260,14 @@ We obtain the best result with 32 experts.
 **Integrating MoE into the Mamba Layer.** Our experiments show that interleaving Mamba layer with a performant sparse MoE \ff layer results in a promising model. However, in the dense setting, Mamba performs slightly better without the \ff layer. This suggests that integrating sparse computation within the Mamba layer itself could yield even better results while conserving a simple, homogeneous architecture. We include some related preliminary investigations in the Appendix, [Section Alternative Designs](#sec-alt_designs).
 
 **Exploration of Different Types of MoE in MoE-Mamba.** 
-While we base our design on the commonly used Switch, numerous other architectures have been proposed since. Not only may those designs perform better overall, but it is possible that with Mamba a different type of MoE will be optimal. Among possible changes in this regard are Expert-Choice routers [@zhou2022mixtureofexperts], fully differentiable architectures [@puigcerver2023sparse,@antoniak2023mixture], varying number of experts and their granularity, and other modifications.
+While we base our design on the commonly used Switch, numerous other architectures have been proposed since. Not only may those designs perform better overall, but it is possible that with Mamba a different type of MoE will be optimal. Among possible changes in this regard are Expert-Choice routers [@zhou2022mixtureofexperts], fully differentiable architectures [@puigcerver2023sparse;@antoniak2023mixture], varying number of experts and their granularity, and other modifications.
 
 # Conclusions
 In this work, we presented the first integration of Mixture of Experts with Mamba architecture, MoE-Mamba. We showed possible ways of combining those techniques and performance improvements achieved with their combination.
 
 We look forward to the upcoming developments in both Mixture of Experts and deep State Space Models. We hope this work will spark further research on combining conditional computation (and Mixture of Experts in particular) with State Space Models (and Mamba in particular). We believe that this path will enable more efficient scaling to even larger language models.  
+
+{{< include figures/_subscribe_section.qmd >}}
 
 
 # Acknowledgements
@@ -303,107 +276,144 @@ We would like to express sincere gratitude to the rest of our team members and p
 
 This work was funded by IDEAS NCBR, which also provided significant computational resources. The research was supported by PL-Grid infrastructure (grant PLG/2023/016148). We acknowledge snakes and experts as essential to our work. We also benefited from the Entropy cluster (hosted at the Faculty of Mathematics, Informatics and Mechanics of the University of Warsaw) funded by NVIDIA, Intel, the Polish National Science Center grant 2022/45/N/ST6/02222, and ERC Starting Grant TOTAL.
 
-\appendix
-\onecolumn
 
-# Hyperparameters
-\begin{table}[h]
-    \caption{Hyperparameters}
-    \label{tab:arch_details}
-    \begin{center}
-    \begin{tabular}{l | l}
-        \toprule
-        \multicolumn{2}{c}{} \\
-        \multicolumn{2}{c}{Model} \\
-        \midrule
-        Total Blocks & 8 (16 in Mamba) \\
-        $d_{model}$ & 512 \\
-        % \vspace{10pt} \\
-        
-        \midrule
-        \multicolumn{2}{c}{} \\
-        
-        \multicolumn{2}{c}{\FF} \\
-        \midrule
-        $d_{ff}$ & 2048 (with Attention) or 1536 (with Mamba) \\
+# Citation Information
 
-        \midrule
-        \multicolumn{2}{c}{} \\
+Please cite the [arXiv version](https://arxiv.org/abs/2401.04081) of this work.
 
-        \multicolumn{2}{c}{Mixture of Experts} \\
-        \midrule
-        $d_{expert}$ & 2048 (with Attention) or 1536 (with Mamba) \\
-        Experts & 32 \\
-        
-        \midrule
-        \multicolumn{2}{c}{} \\
+# References (scroll down for Appendix)
 
-        \multicolumn{2}{c}{Attention} \\
-        \midrule
-        $n_{heads}$ & 8 \\
-        
-        \midrule
-        \multicolumn{2}{c}{} \\
-        
-        \multicolumn{2}{c}{Training} \\
-        \midrule
-        Training Steps & 100k \\
-        Context Length & 256 \\
-        Batch Size & 256 \\
-        LR & 1e-3 \\
-        LR Warmup & 1\% steps \\
-        Gradient Clipping & 0.5 \\
-        \midrule
-        
-        
-    \end{tabular}
-    \end{center}
-\end{table}
+::: {#refs}
+:::
 
-# Alternative Designs {#sec-alt_designs}
+# Appendix
+
+## Hyperparameters
+
+```{=html}
+<table id="hyperparameters-table">
+  <caption>Hyperparameters</caption>
+  <tbody>
+    <!-- model -->
+    <tr>
+    <td colspan="2">
+        <b>Model</b>
+    </td>
+    </tr>
+    <tr>
+      <td>Total Blocks</td>
+      <td>8 (16 in Mamba)</td>
+    </tr>
+    <tr>
+      <td>\(d_{model}\)</td>
+      <td>512</td>
+    </tr>
+    <!-- FF -->
+    <tr>
+    <td colspan="2">
+        <b>Feed-Forward</b>
+    </td>
+    </tr>
+    <tr>
+      <td>\(d_{ff}\)</td>
+      <td>2048 (with Attention) or 1536 (with Mamba) </td>
+    </tr>
+    <!-- Mixture of Experts -->
+    <tr>
+    <td colspan="2">
+        <b>Mixture of Experts</b>
+    </td>
+    </tr>
+    <tr>
+      <td>\(d_{expert}\)</td>
+      <td>2048 (with Attention) or 1536 (with Mamba) </td>
+    </tr>
+    <tr>
+      <td>Experts</td>
+      <td>32</td>
+    </tr>
+    <!-- Attention -->
+    <tr>
+    <td colspan="2">
+        <b>Attention<b>
+    </td>
+    </tr>
+    <tr>
+      <td>\(n_{heads}\)</td>
+      <td>8 </td>
+    </tr>
+    <!-- Training -->
+    <tr>
+    <td colspan="2">
+        <b>Training</b>
+    </td>
+    </tr>
+    <tr>
+      <td>Training Steps</td>
+      <td>100k</td>
+    </tr>
+    <tr>
+      <td>Context Length</td>
+      <td>256</td>
+    </tr>
+    <tr>
+      <td>Batch Size</td>
+      <td>256</td>
+    </tr>
+    <tr>
+      <td>LR</td>
+      <td>1e-3</td>
+    </tr>
+    <tr>
+      <td>LR Warmup</td>
+      <td>1% steps</td>
+    </tr>
+    <tr>
+      <td>Gradient Clipping</td>
+      <td>0.5</td>
+    </tr>
+  </tbody>
+</table>
+```
+
+## Alternative Designs {#sec-alt_designs}
 In this section we explore three possible designs different than the one presented in Section [Architecture](#sec-architecture). While we don't present concrete results from those experiments, we think that in such a fast-moving field there is a value in sharing even rough ideas.
 
-One of the conducted experiments involved replacing the Output Projection with MoE (Figure \ref{fig:other_approaches}). The resulting model, which had fewer blocks to match the number of active parameters, achieved similar results to the original Mamba architecture. Similarly, substituting the Conv Projection layer with a MoE layer (Figure \ref{fig:other_approaches}) yielded similar results to vanilla Mamba, which do not justify the added complexity of conditional computation. We attribute this to the reduction in the number of blocks due to the increase in the effective number of parameters used in each Mamba block by adding the MoE layer. 
+One of the conducted experiments involved replacing the Output Projection with MoE ([Figure 4](#fig-other_approaches)). The resulting model, which had fewer blocks to match the number of active parameters, achieved similar results to the original Mamba architecture. Similarly, substituting the Conv Projection layer with a MoE layer ([Figure 4](#fig-other_approaches)) yielded similar results to vanilla Mamba, which do not justify the added complexity of conditional computation. We attribute this to the reduction in the number of blocks due to the increase in the effective number of parameters used in each Mamba block by adding the MoE layer. 
 
-Another idea, inspired by [@chowdhery2023palm], was the parallel execution of a Mamba layer and MoE (Figure \ref{fig:other_approaches}). However, this architecture yielded worse results even compared to vanilla Mamba when matching the number of active parameters per token.
-% We also explored other approaches, mainly directing our efforts at integrating conditional computation into the Mamba layer (Figure \ref{fig:other_approaches}).
-
-% In the figure \ref{fig:other_approaches}, we tried to substitute output projection with MoE layer. Another set of experiments was to substitute Convolution projection with MoE. Finally, inspired by [@chowdhery2023palm], we tried parallel MoE and Mamba layers without much success.
-% We will describe other designs we have tried.
+Another idea, inspired by [@chowdhery2023palm], was the parallel execution of a Mamba layer and MoE ([Figure 4](#fig-other_approaches)). However, this architecture yielded worse results even compared to vanilla Mamba when matching the number of active parameters per token.
 
 
-![Figure ?. Diagram of Parallel Mamba+MoE architecture (left) and Mamba Block (right)](figures/other_approaches.png)
 
-# Active Parameters vs FLOPs
+![Diagram of Parallel Mamba+MoE architecture (left) and Mamba Block (right)](figures/other_approaches.png){#fig-other_approaches}
+
+## Active Parameters vs FLOPs
 
 In this work we report the number of active parameters (excluding embedding and unembedding layers) and not the number of floating-point operations (FLOPs), following [@zhou2022mixtureofexperts]. Both numbers will be roughly similar, but the number of FLOPs is both harder to calculate and less relevant for hardware-aware architecture like Mamba with its optimizations.
 
-# Learning Rate Tuning {#sec-lr_tuning}
+## Learning Rate Tuning {#sec-lr_tuning}
 Due to computational limits we couldn't tune learning rate for all of the variants of the architecture.
 In this preliminary investigation, we decide to tune the learning rate specifically for vanilla Mamba and re-use it for other models.
 This approach may only underestimate the gains of \modelname{} over vanilla Mamba, therefore it does not impact the main conclusions.
 
-\begin{table}[ht]
-    \centering
-    \begin{tabular}{c|c}
-       LR  & Loss After 100k Steps \\
-       \hline
-        1e-4 & 3.68 \\
-        2e-4 & 3.60 \\
-        5e-4 & 3.53 \\
-        1e-3 & \textbf{3.51} \\
-        2e-3 & 3.55 \\
-        5e-3 & unstable
-    \end{tabular}
-    \caption{LR tuning results after 100k steps.}
-    \label{tab:LR_comparison}
-\end{table}
+| LR | Loss After   100k Steps |
+| --- | --- |
+| 1e-4 | 3.68 | 
+| 2e-4 | 3.60 | 
+| 5e-4 | 3.53 | 
+| 1e-3 | **3.51** | 
+| 2e-3 | 3.55 | 
+| 5e-3 | unstable | 
 
-\pagebreak
 
-![Figure?. LR tuning runs for Mamba. 5e-3 is not included in the plot, as it was unstable.](figures/lr_tuning.png)
+![LR tuning runs for Mamba. 5e-3 is not included in the plot, as it was unstable.](figures/lr_tuning.png){#fig-LR_comparision}
 
 
 
-# Reproducibility
-The codebase used to run the experiments is available at \href{https://github.com/llm-random/llm-random}{https://github.com/llm-random/llm-random}.
+## Reproducibility
+The codebase used to run the experiments is available at our GitHub repo: [https://github.com/llm-random/llm-random](https://github.com/llm-random/llm-random).
+
+
+## Citation Information
+
+Please cite the [arXiv version](https://arxiv.org/abs/2401.04081) of this work.
