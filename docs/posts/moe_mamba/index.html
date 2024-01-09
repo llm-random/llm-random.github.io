@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Maciej Pióro">
+<meta name="author" content="Kamil Ciebiera">
+<meta name="author" content="Krystian Król">
+<meta name="author" content="Jan Ludziejewski">
+<meta name="author" content="Sebastian Jaszczur">
+<meta name="dcterms.date" content="2024-01-09">
+<meta name="description" content="We introduce MoE-Mamba, which reaches the same performance as Mamba in 2.2x less training steps while preserving the inference performance gains of Mamba against the Transformer.">
+
+<title>llm-random - MoE-Mamba: Efficient Selective State Space Models with Mixture of Experts</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-QHXJCKXK7M"></script>
+
+<script type="text/javascript">
+
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-QHXJCKXK7M', { 'anonymize_ip': true});
+</script>
+<script charset="utf-8" src="https://cdn.plot.ly/plotly-2.20.0.min.js"> </script>
+<style>
+
+  .MK {
+
+  display: none;
+  color: brown;
+  }
+  .MK::before {
+
+  content: "[MK] ";
+  }
+
+  .SA {
+
+  display: none;
+  color: goldenrod;
+  }
+  .SA::before {
+
+  content: "[SA] ";
+  }
+
+  .MP {
+
+  display: none;
+  color: teal;
+  }
+  .MP::before {
+
+  content: "[MP] ";
+  }
+
+  .JK {
+
+  display: none;
+  color: coral;
+  }
+  .JK::before {
+
+  content: "[JK] ";
+  }
+
+  .JL {
+
+  display: none;
+  color: green;
+  }
+  .JL::before {
+
+  content: "[JL] ";
+  }
+
+  .TO {
+
+  display: none;
+  color: purple;
+  }
+  .TO::before {
+
+  content: "[TO] ";
+  }
+
+  .MC {
+
+  display: none;
+  color: red;
+  }
+  .MC::before {
+
+  content: "[MC] ";
+  }
+
+  .SJ {
+
+  display: none;
+  color: blue;
+  }
+  .SJ::before {
+
+  content: "[SJ] ";
+  }
+
+  .Listing {
+      display: none;
+  }
+
+  .description {
+      display: none;
+  }
+</style>
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="nav-fixed fullcontent">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">llm-random</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html" rel="" target="">
+ <span class="menu-text">About</span></a>
+  </li>  
+</ul>
+            <div class="quarto-navbar-tools">
+</div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <style>
+    .equal-contribution {
+      padding: 10px;
+      margin: 10px 0px;
+      font-size: small;
+      text-align: right;
+    }
+  </style>
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">MoE-Mamba: Efficient Selective State Space Models with Mixture of Experts</h1>
+                  <div>
+        <div class="description">
+          We introduce MoE-Mamba, which reaches the same performance as Mamba in 2.2x less training steps while preserving the inference performance gains of Mamba against the Transformer.
+        </div>
+      </div>
+                </div>
+  </div>
+
+  <div class="quarto-title-meta-author">
+    <div class="quarto-title-meta-heading">Authors</div>
+    <div class="quarto-title-meta-heading">Affiliations</div>
+    
+      <div class="quarto-title-meta-contents">
+      <p class="author">Maciej Pióro </p>
+    </div>
+      <div class="quarto-title-meta-contents">
+          <p class="affiliation">
+              IDEAS NCBR, Polish Academy of Sciences
+            </p>
+        </div>
+        <div class="quarto-title-meta-contents">
+      <p class="author">Kamil Ciebiera </p>
+    </div>
+      <div class="quarto-title-meta-contents">
+          <p class="affiliation">
+              IDEAS NCBR, University of Warsaw
+            </p>
+        </div>
+        <div class="quarto-title-meta-contents">
+      <p class="author">Krystian Król </p>
+    </div>
+      <div class="quarto-title-meta-contents">
+          <p class="affiliation">
+              IDEAS NCBR, University of Warsaw
+            </p>
+        </div>
+        <div class="quarto-title-meta-contents">
+      <p class="author">Jan Ludziejewski </p>
+    </div>
+      <div class="quarto-title-meta-contents">
+          <p class="affiliation">
+              IDEAS NCBR, University of Warsaw
+            </p>
+        </div>
+        <div class="quarto-title-meta-contents">
+      <p class="author">Sebastian Jaszczur </p>
+    </div>
+      <div class="quarto-title-meta-contents">
+          <p class="affiliation">
+              IDEAS NCBR, University of Warsaw
+            </p>
+        </div>
+      </div>
+
+  <div class="quarto-title-meta">
+
+        
+      <div>
+      <div class="quarto-title-meta-heading">Published</div>
+      <div class="quarto-title-meta-contents">
+        <p class="date">January 9, 2024</p>
+      </div>
+    </div>
+    
+      
+    </div>
+    
+
+
+
+  <div class="equal-contribution">
+    Contributions: Maciej integrated Mamba into the codebase, ran preliminary experiments, and oversaw the course of the project. <br>
+    Kamil ran the bulk of the experiments. Krystian explored alternative Mamba block designs with Jan’s help. <br> Sebastian supervised the project,
+    setting the research direction and leading experiments and analyses.
+    <!-- * equal contribution
+    <br /> † initial idea and project supervision
+    <br /> ‡ research direction and high-level supervision
+    <br /> ♭  -->
+  </div>
+
+
+  <script>
+    function replaceTextWithYellowColor() {
+      var elements = document.getElementsByClassName("MK");
+
+      for (var i = 0; i < elements.length; i++) {
+        elements[i].style.color = "yellow";
+      }
+    }
+  </script>
+
+</header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+<!-- Taken from https://github.com/quarto-dev/quarto-cli/blob/a5a81f5d2afa2664f8748ac9ae5e70b4a0a2baf7/src/resources/formats/html/templates/banner/title-block.html -->
+
+
+
+<!-- # TEST
+
+[new text]{.SA}~~old text~~
+
+[new text]{.MK}~~old text~~
+
+[new text]{.MP}~~old text~~
+
+[new text]{.JK}~~old text~~
+
+[new text]{.JL}~~old text~~
+
+[new text]{.TO}~~old text~~
+
+[new text]{.SJ}~~old text~~
+
+[new text]{.MC}~~old text~~
+
+-->
+<!--
+# Standardization 
+- feed-forward 
+- American
+- Past vs present? PAST o innym researchu, PRESENT o naszym 
+- Vanilla Transformer, not dense baseline
+- importance weights vs weights vs ???
+- average, not mean
+-->
+<!-- [We introduce Mixture of Tokens, a new, fully-differentiable Transformer architecture that builds on top of Sparse Mixture of Tokens, while avoiding problems that stem from sparsity.
+]{.Listing} -->
+<section id="abstract" class="level1">
+<h1>Abstract</h1>
+<p>State Space Models (SSMs) have become serious contenders in the field of sequential modeling, challenging the dominance of Transformers. At the same time, Mixture of Experts (MoE) has significantly improved Transformer-based LLMs, including recent state-of-the-art open-source models. We propose that to unlock the potential of SSMs for scaling, they should be combined with MoE. We showcase this on Mamba, a recent SSM-based model that achieves remarkable, Transformer-like performance. Our model, MoE-Mamba, outperforms both Mamba and Transformer-MoE. In particular, MoE-Mamba reaches the same performance as Mamba in <strong>2.2x less training steps</strong> while preserving the inference performance gains of Mamba against the Transformer.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figures/architecture_comparison.png" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption">Figure 1. Log perplexity throughout the training of different methods. From top to bottom: Transformer; Mamba interleaved with feed-forward layers (Mamba-MLP); Transformer-Moe; Vanilla Mamba; MoE-Mamba.</figcaption>
+</figure>
+</div>
+</section>
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<p>State Space Models (SSMs), e.g. <span class="citation" data-cites="gu2021combining">Gu and Dao (<a href="#ref-gu2023mamba" role="doc-biblioref">2023</a>)</span>, have recently been gaining attention as a possible alternative to Transformers due to linear-time inference, parallelizable training, and strong performance on long-context tasks. In particular, Mamba introduced in <span class="citation" data-cites="gu2023mamba">(<a href="#ref-gu2023mamba" role="doc-biblioref">Gu and Dao, 2023</a>)</span> achieves excellent results through the use of selective SSMs and hardware-aware design, being a promising alternative to the attention-based Transformer architecture.</p>
+<p>In this paper, we advocate that to unlock the potential of SSMs for scaling up, they should be combined with Mixture of Experts (MoE). MoEs <span class="citation" data-cites="fedus2022switch">Sanseviero et al. (<a href="#ref-sanseviero2023moe" role="doc-biblioref">2023</a>)</span> are efficient techniques that are now routinely used for scaling up Transformers, e.g., in the recent Mixtral model <span class="citation" data-cites="Mixtral">(<a href="#ref-Mixtral" role="doc-biblioref">Mistral, 2023</a>)</span>.</p>
+<p>We introduce <strong>MoE-Mamba</strong>, a model that combines Mamba with a Mixture of Experts layer. MoE-Mamba enables efficiency gains of both SSMs and MoE. We also show that MoE-Mamba acts predictably when the number of experts varies (<a href="#sec-ablations">Section Ablations</a>).</p>
+<p>Our experiments, see Figure 1, confirm that MoE-Mamba requires <strong>2.2x less</strong> training steps to achieve the same performance as Mamba and shows potential gains over Transformer and Transformer-MoE. The preliminary results indicate a very promising research direction that may allow scaling SSMs to tens of billions of parameters.</p>
+</section>
+<section id="related-work" class="level1">
+<h1>Related Work</h1>
+<section id="state-space-models" class="level2">
+<h2 class="anchored" data-anchor-id="state-space-models">State Space Models</h2>
+<p>State Space Models <strong>SSMs</strong> form a family of architectures used for sequence modeling. Stemming from the field of control theory, these models can be seen as a combination of RNNs and CNNs <span class="citation" data-cites="gu2023mamba">(<a href="#ref-gu2023mamba" role="doc-biblioref">Gu and Dao, 2023</a>)</span>. Although they potentially offer considerable benefits, a number of issues have been identified with SSMs <span class="citation" data-cites="gu2022efficiently">(<a href="#ref-gu2022efficiently" role="doc-biblioref">Gu et al., 2022</a>)</span>, preventing SSMs from becoming the leading architecture in the task of language modeling. However, recent breakthroughs <span class="citation" data-cites="gu2022efficiently">Smith et al. (<a href="#ref-smith2023simplified" role="doc-biblioref">2023</a>)</span>, have allowed deep SSMs to be scaled to billions of parameters while retaining computational efficiency and strong performance.</p>
+</section>
+<section id="mamba" class="level2">
+<h2 class="anchored" data-anchor-id="mamba">Mamba</h2>
+<p>Building on SSMs, Mamba <span class="citation" data-cites="gu2023mamba">(<a href="#ref-gu2023mamba" role="doc-biblioref">Gu and Dao, 2023</a>)</span> offers linear-time inference (with respect to the context length) and an efficient training process via hardware-aware design. By employing a work-efficient parallel scan, Mamba mitigates the impact of the sequential nature of recurrence, whereas fusing GPU operations removes the requirement to materialize the expanded state. Intermediate states necessary for backpropagation are not saved but instead recomputed during the backward pass, thus reducing memory requirements. The advantages of Mamba over the attention mechanism are especially prominent during inference, as not only the computational complexity is lowered, but also the memory usage is not dependent on the context length.</p>
+<p>Mamba addresses the fundamental trade-off between efficiency and effectiveness in sequence models, emphasizing the significance of state compression. Efficient models necessitate a small state, while effective models require a state containing all crucial information from the context. Departing from other SSMs’ requirements of time and input invariance, a selection mechanism is introduced, controlling how information propagates along the sequence dimension. This design choice is inspired by intuition derived from synthetic tasks such as selective copy and induction heads, allowing the model to differentiate and retain essential information while filtering out the irrelevant.</p>
+<p>Mamba’s performance is showcased through its ability to efficiently utilize longer contexts (up to 1M tokens), with improved pretraining perplexity as the context length increases. The Mamba model, consisting of a stack of Mamba blocks, achieves very strong performance across diverse domains (NLP, genomics, audio), matching or exceeding the performance of established Transformer models. Thus, Mamba emerges as a promising candidate for a general sequence modeling backbone.</p>
+</section>
+<section id="mixture-of-experts" class="level2">
+<h2 class="anchored" data-anchor-id="mixture-of-experts">Mixture of Experts</h2>
+<p>Mixture of Experts (MoE) is a class of techniques that allow drastically increasing the number of parameters of a model without much impact on the FLOPs required for the model’s inference and training. Introduced in <span class="citation" data-cites="moe1991">(<a href="#ref-moe1991" role="doc-biblioref">Jacobs et al., 1991</a>)</span>, MoE was applied in the context of NLP by <span class="citation" data-cites="shazeer2017outrageously">(<a href="#ref-shazeer2017outrageously" role="doc-biblioref">Shazeer et al., 2017</a>)</span>.</p>
+<p>MoE models benefit from sparse activation - for each token processed, only a subset of the model’s parameters is used. Due to their computational demands, layers in Transformers have become the standard target of various MoE techniques <span class="citation" data-cites="lepikhin2020gshard">Fedus et al. (<a href="#ref-fedus2022switch" role="doc-biblioref">2022</a>)</span>.</p>
+<p>A number of approaches have been proposed to address the core problem of MoE, i.e., the process of assigning tokens to experts (<em>routing</em>). Two basic routing algorithms include <em>Token Choice</em> <span class="citation" data-cites="shazeer2017outrageously">(<a href="#ref-shazeer2017outrageously" role="doc-biblioref">Shazeer et al., 2017</a>)</span> (each token is routed to a constant number of experts <span class="math inline">\(K\)</span>) and <em>Expert Choice</em> <span class="citation" data-cites="zhou2022mixtureofexperts">(<a href="#ref-zhou2022mixtureofexperts" role="doc-biblioref">Zhou et al., 2022</a>)</span> (the number of tokens routed to each expert is constant across experts). Switch <span class="citation" data-cites="fedus2022switch">(<a href="#ref-fedus2022switch" role="doc-biblioref">Fedus et al., 2022</a>)</span> is a Token Choice architecture that routes each token to a single expert (<span class="math inline">\(K=1\)</span>) and has successfully been used to scale Transformers up to 1.6T parameters. In our experiments, we follow this MoE design. % with some small changes. </p>
+<p>More recently, MoE models have found their way onto the open-source scene <span class="citation" data-cites="openmoe2023">Fedus et al. (<a href="#ref-fedus2022switch" role="doc-biblioref">2022</a>)</span>. In particular, Mistral has open-sourced Mixtral 8$$7B <span class="citation" data-cites="Mixtral">(<a href="#ref-Mixtral" role="doc-biblioref">Mistral, 2023</a>)</span> that fares comparably to LLaMa 2 70B <span class="citation" data-cites="touvron2023llama">(<a href="#ref-touvron2023llama" role="doc-biblioref">Touvron et al., 2023</a>)</span> while requiring only around 1/6th of its inference computational budget.</p>
+</section>
+</section>
+<section id="model-architecture" class="level1">
+<h1>Model Architecture</h1>
+<p>{#sec-architecture} Although the main underlying mechanism of Mamba differs significantly from the attention mechanism used in Transformers, Mamba retains the high-level, block-based structure of Transformer models. In this paradigm, identical blocks comprising one or more layers are stacked one after another, with each layer’s output being added to the residual stream (Figure [ref:designs_alt]). The final value of the residual stream can subsequently be used to predict the next token in the language modeling task.</p>
+<p>In our design, we leverage the compatibility of the two architectures. In <strong>MoE-Mamba</strong>, every other Mamba layer is replaced with a MoE feed-forward (FF) layer based on Switch <span class="citation" data-cites="fedus2022switch">(<a href="#ref-fedus2022switch" role="doc-biblioref">Fedus et al., 2022</a>)</span>, as shown in Figure [ref:designs_alt]. We note some similarities of this design to one of the approaches explored by <span class="citation" data-cites="gu2023mamba">(<a href="#ref-gu2023mamba" role="doc-biblioref">Gu and Dao, 2023</a>)</span>, in which interleaving Mamba layers with FF layers resulted in a small decrease in performance compared to vanilla Mamba. This setup is denoted as Mamba-MLP in Figure [ref:figure1].</p>
+<p>MoE-Mamba separates unconditional processing of every token by the Mamba layer - which can efficiently integrate the whole context of the sequence into an internal representation - and conditional processing by a MoE layer that can apply the most relevant expert for each token. The idea of interleaving conditional and unconditional processing is used in some MoE-based models, typically by alternating vanilla and MoE FF layers <span class="citation" data-cites="lepikhin2020gshard">Fedus et al. (<a href="#ref-fedus2022switch" role="doc-biblioref">2022</a>)</span>.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figures/all_designs_simple.png" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption">Figure ?. Diagrams of the architectures. From the left: vanilla Transformer, MoE Transformer, Mamba, MoE-Mamba.</figcaption>
+</figure>
+</div>
+<section id="alternative-designs" class="level2">
+<h2 class="anchored" data-anchor-id="alternative-designs">Alternative Designs</h2>
+<p>In addition to the experiments related to interleaving Mamba with MoE, we also conducted other experiments, modifying the original block design by <span class="citation" data-cites="gu2023mamba">(<a href="#ref-gu2023mamba" role="doc-biblioref">Gu and Dao, 2023</a>)</span> to feature conditional computation. We expect this research direction to be important in future attempts to improve the Mamba architecture. We address those experiments in the Appendix, <a href="#sec-alt_designs">Section Alternative Designs</a>.</p>
+</section>
+</section>
+<section id="main-results" class="level1">
+<h1>Main Results</h1>
+<section id="training-setup" class="level2">
+<h2 class="anchored" data-anchor-id="training-setup">Training Setup</h2>
+<p>We compare 5 different settings: vanilla Transformer, Mamba, Mamba-MLP, MoE and MoE-Mamba. % With the exception of Mamba, two types of layers interleave in all architectures. In most Transformers, the feed-forward layer contains <span class="math inline">\(8dm^2\)</span> parameters, whereas <span class="citation" data-cites="gu2023mamba">(<a href="#ref-gu2023mamba" role="doc-biblioref">Gu and Dao, 2023</a>)</span> makes Mamba layers smaller (ca. <span class="math inline">\(6dm^2\)</span>) so that two Mamba layers match the combined parameter count of a feed-forward layer and an attention mechanism. To keep the number of active parameters per token roughly the same in Mamba and in our model, we scale down the size of each expert feed-forward layer to <span class="math inline">\(6dm^2\)</span>. Excluding embedding and unembedding layers, all models access around 26M parameters per token. We train the models on approximately 6.5B tokens and 100k steps.</p>
+<p>We train the model using the English C4 dataset <span class="citation" data-cites="raffel2020exploring">(<a href="#ref-raffel2020exploring" role="doc-biblioref">Raffel et al., 2020</a>)</span> on the task of next token prediction. The text is tokenized using GPT2 tokenizer <span class="citation" data-cites="radford2019language">(<a href="#ref-radford2019language" role="doc-biblioref">Radford et al., 2019</a>)</span>. LR was tuned for vanilla Mamba (see Appendix, <a href="#sec-lr_tuning">Section</a> and re-used for all other training runs. For a full rundown of hyperparameters, see Table <span class="math inline">\(\ref{tab:arch_details}\)</span>.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figures/comparison_experts.png" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption">Figure ?. Training loss for a differing number of experts.</figcaption>
+</figure>
+</div>
+</section>
+<section id="results" class="level2">
+<h2 class="anchored" data-anchor-id="results">Results</h2>
+<p>Table <span class="math inline">\(\ref{tab:results}\)</span> presents the results of training. MoE-Mamba shows a remarkable improvement over the vanilla Mamba model. Notably, MoE-Mamba was able to achieve the same performance as vanilla Mamba in just 46% of training steps. Because the learning rate was tuned for vanilla Mamba (see Appendix, <a href="#sec-lr_tuning">Section LR Tuning</a>, we expect even better performance if the training procedure is optimized for MoE-Mamba. % this result is actually a lower bound on the performance of MoE-Mamba compared to vanilla Mamba. Like <span class="citation" data-cites="gu2023mamba">(<a href="#ref-gu2023mamba" role="doc-biblioref">Gu and Dao, 2023</a>)</span>, we observe that Mamba-MLP achieves slightly worse performance than vanilla Mamba.</p>
+</section>
+</section>
+<section id="sec-ablations" class="level1">
+<h1>Ablations</h1>
+<p>To assess whether Mamba scales well as the number of experts increases, we compare different numbers of experts in our model. For reference, we also include Mamba and Mamba-MLP (the latter is equivalent to MoE-Mamba with a single expert). Figure <span class="math inline">\(\ref{fig:experts_comparison}\)</span> shows the training runs for different numbers of experts. Table <span class="math inline">\(\ref{tab:experts_results}\)</span> shows results after 100k steps. The results show that our approach scales well with the number of experts. If the number of experts is 8 or more, our model achieves better final performance than vanilla Mamba. Since Mamba-MLP is worse than vanilla Mamba, we should expect MoE-Mamba with a small number of experts to exhibit poorer performance than Mamba. We obtain the best result with 32 experts.</p>
+</section>
+<section id="future-work-and-limitations" class="level1">
+<h1>Future Work and Limitations</h1>
+<p><strong>Scaling.</strong> In this preliminary investigation, we only perform experiments on models smaller than 1B parameters. Since MoE has enabled Transformers to be scaled to unprecedented sizes <span class="citation" data-cites="fedus2022switch">(<a href="#ref-fedus2022switch" role="doc-biblioref">Fedus et al., 2022</a>)</span>, we will be excited to see the impact of scaling on the approaches proposed in our work.</p>
+<p><strong>Integrating MoE into the Mamba Layer.</strong> Our experiments show that interleaving Mamba layer with a performant sparse MoE layer results in a promising model. However, in the dense setting, Mamba performs slightly better without the layer. This suggests that integrating sparse computation within the Mamba layer itself could yield even better results while conserving a simple, homogeneous architecture. We include some related preliminary investigations in the Appendix, <a href="#sec-alt_designs">Section Alternative Designs</a>.</p>
+<p><strong>Exploration of Different Types of MoE in MoE-Mamba.</strong> While we base our design on the commonly used Switch, numerous other architectures have been proposed since. Not only may those designs perform better overall, but it is possible that with Mamba a different type of MoE will be optimal. Among possible changes in this regard are Expert-Choice routers <span class="citation" data-cites="zhou2022mixtureofexperts">(<a href="#ref-zhou2022mixtureofexperts" role="doc-biblioref">Zhou et al., 2022</a>)</span>, fully differentiable architectures <span class="citation" data-cites="puigcerver2023sparse">Antoniak et al. (<a href="#ref-antoniak2023mixture" role="doc-biblioref">2023</a>)</span>, varying number of experts and their granularity, and other modifications.</p>
+</section>
+<section id="conclusions" class="level1">
+<h1>Conclusions</h1>
+<p>In this work, we presented the first integration of Mixture of Experts with Mamba architecture, MoE-Mamba. We showed possible ways of combining those techniques and performance improvements achieved with their combination.</p>
+<p>We look forward to the upcoming developments in both Mixture of Experts and deep State Space Models. We hope this work will spark further research on combining conditional computation (and Mixture of Experts in particular) with State Space Models (and Mamba in particular). We believe that this path will enable more efficient scaling to even larger language models.</p>
+</section>
+<section id="acknowledgements" class="level1">
+<h1>Acknowledgements</h1>
+<p>We would like to express sincere gratitude to the rest of our team members and past team members - Jakub Krajewski, Szymon Antoniak, Michał Krutul, and Tomasz Odrzygóźdź - for engineering contributions made to our shared repository and shared research intuitions, as without them it would be impossible to proceed with our project with this velocity. We also thank our advisors and managers, Marek Cygan, Piotr Miłoś, and Piotr Sankowski, for creating a supportive environment and direction.</p>
+<p>This work was funded by IDEAS NCBR, which also provided significant computational resources. The research was supported by PL-Grid infrastructure (grant PLG/2023/016148). We acknowledge snakes and experts as essential to our work. We also benefited from the Entropy cluster (hosted at the Faculty of Mathematics, Informatics and Mechanics of the University of Warsaw) funded by NVIDIA, Intel, the Polish National Science Center grant 2022/45/N/ST6/02222, and ERC Starting Grant TOTAL.</p>
+</section>
+<section id="hyperparameters" class="level1">
+<h1>Hyperparameters</h1>
+
+</section>
+<section id="sec-alt_designs" class="level1">
+<h1>Alternative Designs</h1>
+<p>In this section we explore three possible designs different than the one presented in Section <a href="#sec-architecture">Architecture</a>. While we don’t present concrete results from those experiments, we think that in such a fast-moving field there is a value in sharing even rough ideas.</p>
+<p>One of the conducted experiments involved replacing the Output Projection with MoE (Figure <span class="math inline">\(\ref{fig:other_approaches}\)</span>). The resulting model, which had fewer blocks to match the number of active parameters, achieved similar results to the original Mamba architecture. Similarly, substituting the Conv Projection layer with a MoE layer (Figure <span class="math inline">\(\ref{fig:other_approaches}\)</span>) yielded similar results to vanilla Mamba, which do not justify the added complexity of conditional computation. We attribute this to the reduction in the number of blocks due to the increase in the effective number of parameters used in each Mamba block by adding the MoE layer.</p>
+<p>Another idea, inspired by <span class="citation" data-cites="chowdhery2023palm">(<a href="#ref-chowdhery2023palm" role="doc-biblioref">Chowdhery et al., 2023</a>)</span>, was the parallel execution of a Mamba layer and MoE (Figure <span class="math inline">\(\ref{fig:other_approaches}\)</span>). However, this architecture yielded worse results even compared to vanilla Mamba when matching the number of active parameters per token. % We also explored other approaches, mainly directing our efforts at integrating conditional computation into the Mamba layer (Figure <span class="math inline">\(\ref{fig:other_approaches}\)</span>).</p>
+<p>% In the figure <span class="math inline">\(\ref{fig:other_approaches}\)</span>, we tried to substitute output projection with MoE layer. Another set of experiments was to substitute Convolution projection with MoE. Finally, inspired by <span class="citation" data-cites="chowdhery2023palm">(<a href="#ref-chowdhery2023palm" role="doc-biblioref">Chowdhery et al., 2023</a>)</span>, we tried parallel MoE and Mamba layers without much success. % We will describe other designs we have tried.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figures/other_approaches.png" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption">Figure ?. Diagram of Parallel Mamba+MoE architecture (left) and Mamba Block (right)</figcaption>
+</figure>
+</div>
+</section>
+<section id="active-parameters-vs-flops" class="level1">
+<h1>Active Parameters vs FLOPs</h1>
+<p>In this work we report the number of active parameters (excluding embedding and unembedding layers) and not the number of floating-point operations (FLOPs), following <span class="citation" data-cites="zhou2022mixtureofexperts">(<a href="#ref-zhou2022mixtureofexperts" role="doc-biblioref">Zhou et al., 2022</a>)</span>. Both numbers will be roughly similar, but the number of FLOPs is both harder to calculate and less relevant for hardware-aware architecture like Mamba with its optimizations.</p>
+</section>
+<section id="sec-lr_tuning" class="level1">
+<h1>Learning Rate Tuning</h1>
+<p>Due to computational limits we couldn’t tune learning rate for all of the variants of the architecture. In this preliminary investigation, we decide to tune the learning rate specifically for vanilla Mamba and re-use it for other models. This approach may only underestimate the gains of over vanilla Mamba, therefore it does not impact the main conclusions.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figures/lr_tuning.png" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption">Figure?. LR tuning runs for Mamba. 5e-3 is not included in the plot, as it was unstable.</figcaption>
+</figure>
+</div>
+</section>
+<section id="reproducibility" class="level1">
+<h1>Reproducibility</h1>
+<p>The codebase used to run the experiments is available at .</p>
+
+
+
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body" role="list">
+<div id="ref-antoniak2023mixture" class="csl-entry" role="listitem">
+Szymon Antoniak, Sebastian Jaszczur, Michał Krutul, Maciej Pióro, Jakub Krajewski, Jan Ludziejewski, Tomasz Odrzygóźdź, and Marek Cygan. 2023. <a href="https://arxiv.org/abs/2310.15961">Mixture of tokens: Efficient LLMs through cross-example aggregation</a>.
+</div>
+<div id="ref-chowdhery2023palm" class="csl-entry" role="listitem">
+Aakanksha Chowdhery, Sharan Narang, Jacob Devlin, Maarten Bosma, Gaurav Mishra, Adam Roberts, Paul Barham, Hyung Won Chung, Charles Sutton, Sebastian Gehrmann, et al. 2023. Palm: Scaling language modeling with pathways. <em>Journal of Machine Learning Research</em>, 24(240):1–113.
+</div>
+<div id="ref-fedus2022switch" class="csl-entry" role="listitem">
+William Fedus, Barret Zoph, and Noam Shazeer. 2022. <a href="https://arxiv.org/abs/2101.03961">Switch transformers: Scaling to trillion parameter models with simple and efficient sparsity</a>.
+</div>
+<div id="ref-fu2023hungry" class="csl-entry" role="listitem">
+Daniel Y. Fu, Tri Dao, Khaled K. Saab, Armin W. Thomas, Atri Rudra, and Christopher Ré. 2023. <a href="https://arxiv.org/abs/2212.14052">Hungry hungry hippos: Towards language modeling with state space models</a>.
+</div>
+<div id="ref-gu2023mamba" class="csl-entry" role="listitem">
+Albert Gu and Tri Dao. 2023. <a href="https://arxiv.org/abs/2312.00752">Mamba: Linear-time sequence modeling with selective state spaces</a>.
+</div>
+<div id="ref-gu2022efficiently" class="csl-entry" role="listitem">
+Albert Gu, Karan Goel, and Christopher Ré. 2022. <a href="https://arxiv.org/abs/2111.00396">Efficiently modeling long sequences with structured state spaces</a>.
+</div>
+<div id="ref-gu2021combining" class="csl-entry" role="listitem">
+Albert Gu, Isys Johnson, Karan Goel, Khaled Saab, Tri Dao, Atri Rudra, and Christopher Ré. 2021. <a href="https://arxiv.org/abs/2110.13985">Combining recurrent, convolutional, and continuous-time models with linear state-space layers</a>.
+</div>
+<div id="ref-moe1991" class="csl-entry" role="listitem">
+Robert A. Jacobs, Michael I. Jordan, Steven J. Nowlan, and Geoffrey E. Hinton. 1991. <a href="https://doi.org/10.1162/neco.1991.3.1.79">Adaptive mixtures of local experts</a>. <em>Neural Computation</em>, 3(1):79–87.
+</div>
+<div id="ref-lepikhin2020gshard" class="csl-entry" role="listitem">
+Dmitry Lepikhin, HyoukJoong Lee, Yuanzhong Xu, Dehao Chen, Orhan Firat, Yanping Huang, Maxim Krikun, Noam Shazeer, and Zhifeng Chen. 2020. <a href="https://arxiv.org/abs/2006.16668">GShard: Scaling giant models with conditional computation and automatic sharding</a>.
+</div>
+<div id="ref-Mixtral" class="csl-entry" role="listitem">
+Mistral. 2023. <a href="https://mistral.ai/news/mixtral-of-experts/">Mixtral of experts</a>.
+</div>
+<div id="ref-puigcerver2023sparse" class="csl-entry" role="listitem">
+Joan Puigcerver, Carlos Riquelme, Basil Mustafa, and Neil Houlsby. 2023. <a href="https://arxiv.org/abs/2308.00951">From sparse to soft mixtures of experts</a>.
+</div>
+<div id="ref-radford2019language" class="csl-entry" role="listitem">
+Alec Radford, Jeffrey Wu, Rewon Child, David Luan, Dario Amodei, Ilya Sutskever, et al. 2019. Language models are unsupervised multitask learners. <em>OpenAI blog</em>, 1(8):9.
+</div>
+<div id="ref-raffel2020exploring" class="csl-entry" role="listitem">
+Colin Raffel, Noam Shazeer, Adam Roberts, Katherine Lee, Sharan Narang, Michael Matena, Yanqi Zhou, Wei Li, and Peter J Liu. 2020. Exploring the limits of transfer learning with a unified text-to-text transformer. <em>The Journal of Machine Learning Research</em>, 21(1):5485–5551.
+</div>
+<div id="ref-sanseviero2023moe" class="csl-entry" role="listitem">
+Omar Sanseviero, Lewis Tunstall, Philipp Schmid, Sourab Mangrulkar, Younes Belkada, and Pedro Cuenca. 2023. <a href=" https://huggingface.co/blog/moe ">Mixture of experts explained</a>.
+</div>
+<div id="ref-shazeer2017outrageously" class="csl-entry" role="listitem">
+Noam Shazeer, Azalia Mirhoseini, Krzysztof Maziarz, Andy Davis, Quoc Le, Geoffrey Hinton, and Jeff Dean. 2017. <a href="https://arxiv.org/abs/1701.06538">Outrageously large neural networks: The sparsely-gated mixture-of-experts layer</a>.
+</div>
+<div id="ref-smith2023simplified" class="csl-entry" role="listitem">
+Jimmy T. H. Smith, Andrew Warrington, and Scott W. Linderman. 2023. <a href="https://arxiv.org/abs/2208.04933">Simplified state space layers for sequence modeling</a>.
+</div>
+<div id="ref-touvron2023llama" class="csl-entry" role="listitem">
+Hugo Touvron, Louis Martin, Kevin Stone, Peter Albert, Amjad Almahairi, Yasmine Babaei, Nikolay Bashlykov, Soumya Batra, Prajjwal Bhargava, Shruti Bhosale, Dan Bikel, Lukas Blecher, Cristian Canton Ferrer, Moya Chen, Guillem Cucurull, David Esiobu, Jude Fernandes, Jeremy Fu, Wenyin Fu, et al. 2023. <a href="https://arxiv.org/abs/2307.09288">Llama 2: Open foundation and fine-tuned chat models</a>.
+</div>
+<div id="ref-openmoe2023" class="csl-entry" role="listitem">
+Fuzhao Xue, Zian Zheng, Yao Fu, Jinjie Ni, Zangwei Zheng, Wangchunshu Zhou, and Yang You. 2023. OpenMoE: Open mixture-of-experts language models.
+</div>
+<div id="ref-zhou2022mixtureofexperts" class="csl-entry" role="listitem">
+Yanqi Zhou, Tao Lei, Hanxiao Liu, Nan Du, Yanping Huang, Vincent Zhao, Andrew Dai, Zhifeng Chen, Quoc Le, and James Laudon. 2022. <a href="https://arxiv.org/abs/2202.09368">Mixture-of-experts with expert choice routing</a>.
+</div>
+</div></section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

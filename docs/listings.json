@@ -2,6 +2,7 @@
   {
     "listing": "/index.html",
     "items": [
+      "/posts/moe_mamba/index.html",
       "/posts/mixture_of_tokens/index.html",
       "/posts/neuron_recycling/index.html"
     ]
