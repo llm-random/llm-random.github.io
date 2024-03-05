@@ -5,6 +5,7 @@ project:
 website:
   title: "llm-random"
   google-analytics: G-QHXJCKXK7M
+  open-graph: true
   margin-header: subscribe_side.html
 
   navbar:
