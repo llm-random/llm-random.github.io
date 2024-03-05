@@ -27,7 +27,9 @@ bibliography: bibliography.bib
 csl: apa.csl
 # date-modified: "2023-09-29"
 categories: []
-image: "logo_moemamba.png"
+image: logo_moemamba.png
+open-graph:
+  image: ./posts/moe_mamba/logo_moemamba.png
 format:
   html:
     template-partials:
