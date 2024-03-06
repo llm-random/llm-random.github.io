@@ -24,15 +24,15 @@ TODO:
 
 Blog of LLM-Random research group in [IDEAS NCBR](https://ideas-ncbr.pl/en/), started in mid-2022 by Sebastian Jaszczur. Team members, in the order of joining, listed below. We are happy to collaborate with outside institutions and people.
 
-* Sebastian Jaszczur [{{< fa brands x-twitter >}}](https://twitter.com/S_Jaszczur) [{{< fa brands linkedin >}}](https://pl.linkedin.com/in/sebastian-jaszczur-129866a3) [{{< fa brands github >}}](https://github.com/sebastianjaszczur) [{{< fa brands google-scholar >}}](https://scholar.google.pl/citations?user=KF__0WgAAAAJ)
-* Marek Cygan [{{< fa brands x-twitter >}}](https://twitter.com/marek_a_cygan), as advisor
-* Jakub Krajewski [{{< fa brands x-twitter >}}](https://twitter.com/kuba_krj) [{{< fa brands github >}}](http://github.com/kuba-krj) [{{< fa brands google-scholar >}}](https://scholar.google.com/citations?user=v5mZs1kAAAAJ)
-* Szymon Antoniak [{{< fa brands x-twitter >}}](https://twitter.com/Simontwice2) [{{< fa brands github >}}](https://github.com/Simontwice)  (past member)
-* Maciej Pióro [{{< fa brands x-twitter >}}](https://twitter.com/maciejpioro) [{{< fa brands linkedin >}}](https://www.linkedin.com/in/maciej-pi%C3%B3ro-0ab6201a2/) [{{< fa brands github >}}](https://github.com/maciek-pioro) [{{< fa brands google-scholar >}}](https://scholar.google.pl/citations?user=KkbtNw0AAAAJ)
+* Sebastian Jaszczur  [{{< fa brands x-twitter >}}](https://twitter.com/S_Jaszczur)     [{{< fa brands linkedin >}}](https://pl.linkedin.com/in/sebastian-jaszczur-129866a3)    [{{< fa brands github >}}](https://github.com/sebastianjaszczur)      [{{< fa brands google-scholar >}}](https://scholar.google.pl/citations?user=KF__0WgAAAAJ)
+* Marek Cygan         [{{< fa brands x-twitter >}}](https://twitter.com/marek_a_cygan), as advisor
+* Jakub Krajewski     [{{< fa brands x-twitter >}}](https://twitter.com/kuba_krj)                                                                                               [{{< fa brands github >}}](http://github.com/kuba-krj)                [{{< fa brands google-scholar >}}](https://scholar.google.com/citations?user=v5mZs1kAAAAJ)
+* Szymon Antoniak     [{{< fa brands x-twitter >}}](https://twitter.com/Simontwice2)                                                                                            [{{< fa brands github >}}](https://github.com/Simontwice)  (past member)
+* Maciej Pióro        [{{< fa brands x-twitter >}}](https://twitter.com/maciejpioro)    [{{< fa brands linkedin >}}](https://www.linkedin.com/in/maciej-pi%C3%B3ro-0ab6201a2/)  [{{< fa brands github >}}](https://github.com/maciek-pioro)           [{{< fa brands google-scholar >}}](https://scholar.google.pl/citations?user=KkbtNw0AAAAJ)
 * Tomasz Odrzygóźdź (past member)
-* Jan Ludziejewski [{{< fa brands x-twitter >}}](https://twitter.com/jahulas) [{{< fa brands linkedin >}}](https://www.linkedin.com/in/jan-ludziejewski-034959223/)  [{{< fa brands github >}}](https://github.com/ludziej) [{{< fa brands google-scholar >}}](https://scholar.google.com/citations?user=YihTUGQAAAAJ&hl=pl)
-* Michał Krutul [{{< fa brands x-twitter >}}](https://twitter.com/CrewTool)  [{{< fa brands github >}}](https://github.com/michalkrutul)
-* Kamil Ciebiera [{{< fa brands github >}}](https://github.com/ciebson123)
+* Jan Ludziejewski    [{{< fa brands x-twitter >}}](https://twitter.com/jahulas)        [{{< fa brands linkedin >}}](https://www.linkedin.com/in/jan-ludziejewski-034959223/)   [{{< fa brands github >}}](https://github.com/ludziej)                [{{< fa brands google-scholar >}}](https://scholar.google.com/citations?user=YihTUGQAAAAJ&hl=pl)
+* Michał Krutul       [{{< fa brands x-twitter >}}](https://twitter.com/CrewTool)       [{{< fa brands linkedin >}}](https://www.linkedin.com/in/crewtool/)                     [{{< fa brands github >}}](https://github.com/crewtool)
+* Kamil Ciebiera                                                                                                                                                                [{{< fa brands github >}}](https://github.com/ciebson123)
 * Krystian Król
 
 Public repositories of the group are available at [on GitHub](https://github.com/llm-random/).
